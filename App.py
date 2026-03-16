@@ -26,6 +26,7 @@ from Database import (
     get_admin_global_summary
 )
 from Planner import build_study_plan
+from LLM_helper import generate_plan_feedback
 
 
 st.set_page_config(page_title="Personalized Study Planner", layout="wide")
@@ -50,6 +51,9 @@ if "admin_username" not in st.session_state:
 if "generated_plan" not in st.session_state:
     st.session_state.generated_plan = None
 
+if "ai_study_advice" not in st.session_state:
+    st.session_state.ai_study_advice = None
+
 
 # -----------------------------
 # Helpers
@@ -58,6 +62,7 @@ def logout_student():
     st.session_state.student_id = None
     st.session_state.student_name = None
     st.session_state.generated_plan = None
+    st.session_state.ai_study_advice = None
 
 
 def logout_admin():
@@ -338,6 +343,7 @@ def render_planning_setup_page(student_id: str):
         if st.button("Build Study Plan"):
             plan_result = build_study_plan(student_id)
             st.session_state.generated_plan = plan_result
+            st.session_state.ai_study_advice = None
 
         plan_result = st.session_state.generated_plan
 
@@ -383,6 +389,19 @@ def render_planning_setup_page(student_id: str):
                         f"- {item['task_name']} — remaining {item['remaining_hours']}h "
                         f"(deadline: {item['deadline']}, importance: {item['importance_level']})"
                     )
+
+            st.markdown("---")
+            if st.button("Generate AI Study Advice"):
+                with st.spinner("Generating AI study advice..."):
+                    advice = generate_plan_feedback(
+                        student_name=st.session_state.student_name,
+                        plan_result=plan_result
+                    )
+                    st.session_state.ai_study_advice = advice
+
+            if st.session_state.ai_study_advice:
+                st.subheader("AI Study Advice")
+                st.write(st.session_state.ai_study_advice)
 
             if daily_plan and st.button("Save Generated Study Plan"):
                 save_study_plan(student_id, daily_plan)
