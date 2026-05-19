@@ -3,3 +3,4 @@
 __pycache__/
 *.pyc
 study_planner.db
+Test_case.py
