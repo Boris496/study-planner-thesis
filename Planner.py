@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta
 from typing import Dict, List
 import math
+from zoneinfo import ZoneInfo
 
 import Database
 
@@ -341,8 +342,11 @@ def build_study_plan(student_id: str):
             "day_limit_hours": DAY_LIMIT_HOURS
         }
 
-    today = date.today()
-    now_time = datetime.now().strftime("%H:%M")
+    local_tz = ZoneInfo("Europe/Amsterdam")
+
+    now_local = datetime.now(local_tz)
+    today = now_local.date()
+    now_time = now_local.strftime("%H:%M")
 
     parsed_deadlines = []
     for task in tasks:
