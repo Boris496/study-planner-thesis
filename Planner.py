@@ -25,7 +25,7 @@ ENERGY_BY_REASON = {
     "Physical activity": "Medium",
     "Social": "Medium",
     "Rest": "High",
-    "Study-free day": "Low",
+    "Study-free day": "High",
     "Other": "Medium"
 }
 
