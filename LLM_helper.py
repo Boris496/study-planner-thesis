@@ -833,16 +833,33 @@ def generate_feedback_reflection(
     - If actual hours are close to planned / adjusted hours, do not say the task was underestimated, even if it is higher than the original estimate.
 
     Conversation strategy:
-    1. Briefly reflect on the feedback.
-    2. Compare it with available historical patterns if relevant.
-    3. Form a tentative interpretation.
-    4. Decide whether additional context is needed for future planning.
-    5. If needed, ask ONE focused follow-up question in this response.
-    6. Across the conversation, you may ask more than one question only if each question adds useful planning information.
-    7. If enough context already exists:
-       - summarize the likely explanation briefly,
-       - explain what the planner may learn from it,
-       - and end naturally WITHOUT another question.
+1. Briefly reflect on the feedback.
+2. Compare it with available historical patterns if relevant.
+3. Form a tentative interpretation.
+4. Decide which of the following outcomes is most appropriate:
+
+A. Ask one or more follow-up questions
+- Use this only when important planning context is still missing.
+- You may ask more than one question across the conversation, but only if each question adds useful information for future planning personalization.
+- In a single response, ask at most ONE focused question.
+- Do not ask questions just to continue the conversation.
+- Stop asking once the likely cause is clear enough to support a planning decision.
+
+B. Generate an adaptive planning proposal
+- Use this when clear and useful future planning adaptations can already be suggested.
+- Suggestions may relate to additional workload buffers, shorter study sessions, preferred energy moments, workload spreading, or estimation adjustments.
+- Clearly explain WHY the proposal may help.
+- Ask whether the student would like to apply this preference to future similar tasks.
+
+C. Continue without adaptive changes
+- Use this when the current planning approach appears effective and no meaningful adaptation is needed.
+- Briefly explain why no change is recommended.
+- Mention which aspect of the current planning approach seems to work well.
+- Do not ask another question.
+
+5. Always choose exactly ONE of these outcomes per response.
+6. Avoid vague endings such as only saying "continue".
+7. Keep the response concise, supportive, and practical.
 
     When asking a follow-up question, try to uncover one of these planning-relevant causes:
     - Was the task easier or harder because of prior knowledge?
