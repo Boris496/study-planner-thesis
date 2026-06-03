@@ -748,6 +748,68 @@ def add_task(
     cursor.close()
     conn.close()
 
+def update_task(
+    task_id: int,
+    task_name: str,
+    subject: str,
+    task_type: str,
+    importance_level: str,
+    deadline: str,
+    estimated_hours: float,
+    is_spread_learning: bool = False,
+    preferred_study_days: int | None = None,
+    min_session_hours: float | None = None,
+    max_session_hours: float | None = None
+):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    normalized_task_type = _normalize_task_type(task_type)
+    derived_task_intensity = _derive_task_intensity(normalized_task_type)
+    normalized_subject = subject.strip() if subject and subject.strip() else "General"
+
+    if normalized_task_type != "Study / Learning":
+        is_spread_learning = False
+        preferred_study_days = None
+        min_session_hours = None
+        max_session_hours = None
+
+    adjusted_hours = round(float(estimated_hours), 2)
+
+    cursor.execute("""
+        UPDATE tasks
+        SET task_name = %s,
+            subject = %s,
+            task_type = %s,
+            importance_level = %s,
+            task_intensity = %s,
+            deadline = %s,
+            estimated_hours = %s,
+            adjusted_hours = %s,
+            is_spread_learning = %s,
+            preferred_study_days = %s,
+            min_session_hours = %s,
+            max_session_hours = %s
+        WHERE task_id = %s
+    """, (
+        task_name,
+        normalized_subject,
+        normalized_task_type,
+        importance_level,
+        derived_task_intensity,
+        deadline,
+        float(estimated_hours),
+        adjusted_hours,
+        is_spread_learning,
+        preferred_study_days,
+        min_session_hours,
+        max_session_hours,
+        task_id
+    ))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 def get_tasks_for_student(student_id: str):
     conn = get_connection()
@@ -1476,6 +1538,28 @@ def add_activity_slot(student_id: str, study_date: str, start_time: str, end_tim
     cursor.close()
     conn.close()
 
+def update_activity_slot(slot_id: int, study_date: str, start_time: str, end_time: str, reason: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE activity_slots
+        SET study_date = %s,
+            start_time = %s,
+            end_time = %s,
+            reason = %s
+        WHERE slot_id = %s
+    """, (
+        study_date,
+        start_time,
+        end_time,
+        reason,
+        slot_id
+    ))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 def get_activity_slots_for_range(student_id: str, start_date: str, end_date: str):
     conn = get_connection()

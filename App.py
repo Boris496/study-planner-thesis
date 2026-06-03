@@ -43,6 +43,8 @@ from Database import (
     get_due_feedback_tasks,
     save_ai_learning_preference,
     get_ai_learning_preferences_for_student,
+    update_task,
+    update_activity_slot,
 
 )
 
@@ -1366,8 +1368,92 @@ def render_planning_setup_page(student_id: str):
 
         if open_tasks:
             for task in open_tasks:
+
                 task_id, name, subject, ttype, importance, intensity, dl, est, adj, status, is_spread_learning, preferred_study_days, min_session_hours, max_session_hours = task
-                render_task_card(task_id, name, subject, ttype, importance, intensity, dl, est, adj, status)
+
+                col_task, col_edit = st.columns([8, 1])
+
+                with col_task:
+                    render_task_card(
+                        task_id,
+                        name,
+                        subject,
+                        ttype,
+                        importance,
+                        intensity,
+                        dl,
+                        est,
+                        adj,
+                        status
+                    )
+
+                with col_edit:
+                    if st.button("Edit", key=f"edit_task_{task_id}"):
+                        st.session_state[f"editing_task_{task_id}"] = True
+
+                if st.session_state.get(f"editing_task_{task_id}", False):
+
+                    with st.form(f"edit_task_form_{task_id}"):
+
+                        edit_name = st.text_input(
+                            "Task name",
+                            value=name
+                        )
+
+                        edit_deadline = st.date_input(
+                            "Deadline",
+                            value=datetime.strptime(dl, "%Y-%m-%d").date()
+                        )
+
+                        edit_hours = st.number_input(
+                            "Estimated hours",
+                            min_value=0.5,
+                            max_value=200.0,
+                            value=float(est),
+                            step=0.5
+                        )
+
+                        edit_importance = st.selectbox(
+                            "Importance level",
+                            ["High", "Medium", "Low"],
+                            index=["High", "Medium", "Low"].index(importance)
+                        )
+
+                        save_col, cancel_col = st.columns(2)
+
+                        with save_col:
+                            save_clicked = st.form_submit_button("Save changes")
+
+                        with cancel_col:
+                            cancel_clicked = st.form_submit_button("Cancel")
+
+                        if save_clicked:
+                            update_task(
+                                task_id=task_id,
+                                task_name=edit_name,
+                                subject=subject,
+                                task_type=ttype,
+                                importance_level=edit_importance,
+                                deadline=edit_deadline.isoformat(),
+                                estimated_hours=float(edit_hours),
+                                is_spread_learning=is_spread_learning,
+                                preferred_study_days=preferred_study_days,
+                                min_session_hours=min_session_hours,
+                                max_session_hours=max_session_hours
+                            )
+
+                            st.session_state.generated_plan = None
+                            st.session_state.ai_study_advice = None
+                            st.session_state.llm_chat_history = []
+
+                            st.session_state[f"editing_task_{task_id}"] = False
+
+                            st.success("Task updated successfully.")
+                            st.rerun()
+
+                        if cancel_clicked:
+                            st.session_state[f"editing_task_{task_id}"] = False
+                            st.rerun()
 
             st.markdown("### Delete open tasks")
 
@@ -1742,57 +1828,129 @@ def render_planning_setup_page(student_id: str):
 
             for slot_id, study_date, start_time_str, end_time_str, reason in slot_rows:
 
-                col_a, col_b = st.columns([5, 1])
+                col_a, col_b, col_c = st.columns([5, 1, 1])
 
                 with col_a:
-
                     checked = st.checkbox(
-
                         f"{study_date} | {start_time_str} - {end_time_str} | {reason}",
-
                         key=f"activity_slot_checkbox_{slot_id}"
-
                     )
 
                     if checked:
                         selected_slot_ids_to_delete.append(slot_id)
 
                 with col_b:
+                    if st.button("Edit", key=f"edit_activity_slot_{slot_id}"):
+                        st.session_state[f"editing_activity_slot_{slot_id}"] = True
 
+                with col_c:
                     if st.button("Delete", key=f"delete_activity_slot_{slot_id}"):
                         delete_activity_slot(slot_id)
-
                         st.success(f"Activity slot deleted: {study_date} {start_time_str}-{end_time_str}")
-
                         st.rerun()
+
+                if st.session_state.get(f"editing_activity_slot_{slot_id}", False):
+                    with st.form(f"edit_activity_form_{slot_id}"):
+
+                        edit_activity_date = st.date_input(
+                            "Activity date",
+                            value=datetime.strptime(study_date, "%Y-%m-%d").date(),
+                            key=f"edit_activity_date_{slot_id}"
+                        )
+
+                        activity_reason_options = [
+                            "Work/School",
+                            "Physical activity",
+                            "Social",
+                            "Rest",
+                            "Study-free day",
+                            "Other"
+                        ]
+
+                        edit_reason = st.selectbox(
+                            "Activity type",
+                            activity_reason_options,
+                            index=activity_reason_options.index(reason) if reason in activity_reason_options else 0,
+                            key=f"edit_activity_reason_{slot_id}"
+                        )
+
+                        if edit_reason != "Study-free day":
+                            ec1, ec2 = st.columns(2)
+
+                            with ec1:
+                                edit_start_time = st.time_input(
+                                    "Start time",
+                                    value=datetime.strptime(start_time_str, "%H:%M").time(),
+                                    key=f"edit_activity_start_{slot_id}"
+                                )
+
+                            with ec2:
+                                edit_end_time = st.time_input(
+                                    "End time",
+                                    value=datetime.strptime(end_time_str, "%H:%M").time(),
+                                    key=f"edit_activity_end_{slot_id}"
+                                )
+
+                        save_col, cancel_col = st.columns(2)
+
+                        with save_col:
+                            save_clicked = st.form_submit_button("Save changes")
+
+                        with cancel_col:
+                            cancel_clicked = st.form_submit_button("Cancel")
+
+                        if save_clicked:
+                            if edit_reason == "Study-free day":
+                                start_time_to_save = "00:00"
+                                end_time_to_save = "23:59"
+                            else:
+                                if edit_start_time >= edit_end_time:
+                                    st.warning("End time must be later than start time.")
+                                    return
+
+                                start_time_to_save = edit_start_time.strftime("%H:%M")
+                                end_time_to_save = edit_end_time.strftime("%H:%M")
+
+                            update_activity_slot(
+                                slot_id=slot_id,
+                                study_date=edit_activity_date.isoformat(),
+                                start_time=start_time_to_save,
+                                end_time=end_time_to_save,
+                                reason=edit_reason
+                            )
+
+                            st.session_state.generated_plan = None
+                            st.session_state.ai_study_advice = None
+                            st.session_state.llm_chat_history = []
+                            st.session_state[f"editing_activity_slot_{slot_id}"] = False
+
+                            st.success("Activity slot updated successfully.")
+                            st.rerun()
+
+                        if cancel_clicked:
+                            st.session_state[f"editing_activity_slot_{slot_id}"] = False
+                            st.rerun()
 
             st.markdown("---")
 
             confirm_delete_selected_slots = st.checkbox(
-
                 "I understand that selected activity slots will be deleted",
-
                 key="confirm_delete_selected_activity_slots"
-
             )
 
             if st.button("Delete selected activity slots"):
 
                 if not selected_slot_ids_to_delete:
-
                     st.warning("Please select at least one activity slot.")
 
                 elif not confirm_delete_selected_slots:
-
                     st.warning("Please confirm deletion of selected activity slots.")
 
                 else:
-
                     for slot_id in selected_slot_ids_to_delete:
                         delete_activity_slot(slot_id)
 
                     st.success(f"{len(selected_slot_ids_to_delete)} activity slot(s) deleted.")
-
                     st.rerun()
 
         else:
