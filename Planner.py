@@ -705,10 +705,7 @@ def build_study_plan(student_id: str):
                 break
 
             if selected_task["is_spread_learning"]:
-                min_block = max(
-                    0.5,
-                    float(selected_task.get("min_session_hours", 1.0))
-                )
+                min_block = 0.5
 
             elif selected_task["task_type"] in ["Practice", "Writing"]:
                 min_block = 0.5
