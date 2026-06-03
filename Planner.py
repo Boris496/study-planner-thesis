@@ -13,6 +13,7 @@ COGNITIVE_LIMIT_HOURS = 5.0
 MAX_STUDY_BLOCK_HOURS = 1.5
 BREAK_DURATION_HOURS = 0.33
 MIN_BLOCK_HOURS = 0.25
+RECOVERY_AFTER_LOW_ENERGY_HOURS = 1.0
 
 IMPORTANCE_RANK = {
     "High": 0,
@@ -51,7 +52,7 @@ COGNITIVE_TASK_TYPES = {
     "Study / Learning",
     "Practice",
     "Writing"
-}
+    }
 
 
 def daterange(start_date: date, end_date: date):
@@ -121,6 +122,42 @@ def _merge_overlapping_blocks(blocks: List[dict]) -> List[dict]:
 
     return merged
 
+def _append_free_slot_with_recovery(free_slots, day_str, start_time, end_time, energy_level):
+    hours = _calculate_slot_hours(start_time, end_time)
+
+    if hours <= 0:
+        return
+
+    if energy_level == "Low" and hours > RECOVERY_AFTER_LOW_ENERGY_HOURS:
+        recovery_end = _add_hours_to_time(start_time, RECOVERY_AFTER_LOW_ENERGY_HOURS)
+
+        free_slots.append({
+            "study_date": day_str,
+            "start_time": start_time,
+            "end_time": recovery_end,
+            "remaining_hours": RECOVERY_AFTER_LOW_ENERGY_HOURS,
+            "energy_level": "Low"
+        })
+
+        remaining_hours = _calculate_slot_hours(recovery_end, end_time)
+
+        if remaining_hours > 0:
+            free_slots.append({
+                "study_date": day_str,
+                "start_time": recovery_end,
+                "end_time": end_time,
+                "remaining_hours": remaining_hours,
+                "energy_level": "Medium"
+            })
+
+    else:
+        free_slots.append({
+            "study_date": day_str,
+            "start_time": start_time,
+            "end_time": end_time,
+            "remaining_hours": hours,
+            "energy_level": energy_level
+        })
 
 def _build_day_free_slots(day_str: str, wake_time: str, sleep_time: str, day_activities: List[dict]) -> List[dict]:
     free_slots = []
@@ -144,13 +181,13 @@ def _build_day_free_slots(day_str: str, wake_time: str, sleep_time: str, day_act
         if current_start < clipped_start:
             hours = _calculate_slot_hours(current_start, clipped_start)
             if hours > 0:
-                free_slots.append({
-                    "study_date": day_str,
-                    "start_time": current_start,
-                    "end_time": clipped_start,
-                    "remaining_hours": hours,
-                    "energy_level": current_energy
-                })
+                _append_free_slot_with_recovery(
+                    free_slots,
+                    day_str,
+                    current_start,
+                    clipped_start,
+                    current_energy
+                )
 
         if clipped_end > current_start:
             current_start = clipped_end
@@ -159,13 +196,13 @@ def _build_day_free_slots(day_str: str, wake_time: str, sleep_time: str, day_act
     if current_start < sleep_time:
         hours = _calculate_slot_hours(current_start, sleep_time)
         if hours > 0:
-            free_slots.append({
-                "study_date": day_str,
-                "start_time": current_start,
-                "end_time": sleep_time,
-                "remaining_hours": hours,
-                "energy_level": current_energy
-            })
+            _append_free_slot_with_recovery(
+                free_slots,
+                day_str,
+                current_start,
+                sleep_time,
+                current_energy
+            )
 
     return free_slots
 
@@ -559,11 +596,22 @@ def build_study_plan(student_id: str):
                 preferred_candidates = [
                     task for task in sortable_tasks
                     if not task.get("avoid_after_high_difficulty_task", False)
-                    and task["adjusted_hours"] > 0
+                       and task["adjusted_hours"] > 0
                 ]
 
                 if preferred_candidates:
                     candidate_tasks = preferred_candidates
+
+            # Soft energy preference
+            candidate_tasks = sorted(
+                candidate_tasks,
+                key=lambda candidate: (
+                    0 if candidate.get("preferred_energy") == slot_energy else 1,
+                    candidate["deadline"],
+                    IMPORTANCE_RANK.get(candidate["importance_level"], 99),
+                    -candidate["adjusted_hours"]
+                )
+            )
 
             for task in candidate_tasks:
                 if task["task_id"] in skipped_task_ids_this_slot:
@@ -583,19 +631,6 @@ def build_study_plan(student_id: str):
                 allowed = ALLOWED_INTENSITIES.get(slot_energy, {"Low"})
                 if task["task_intensity"] not in allowed:
                     continue
-
-                preferred_energy = task.get("preferred_energy")
-
-                if preferred_energy and slot_energy != preferred_energy:
-                    has_matching_energy_slot = any(
-                        future_slot["study_date"] <= task["deadline"].isoformat()
-                        and future_slot["energy_level"] == preferred_energy
-                        and float(future_slot["remaining_hours"]) > 0
-                        for future_slot in free_slots
-                    )
-
-                    if has_matching_energy_slot:
-                        continue
 
                 already_planned_today = planned_hours_per_day.get(day_str, 0.0)
                 remaining_day_capacity = round(DAY_LIMIT_HOURS - already_planned_today, 2)

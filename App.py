@@ -1845,6 +1845,79 @@ def render_planning_setup_page(student_id: str):
 
         else:
 
+            st.markdown("### Review before planning")
+            st.caption("Check your tasks, sleep/wake settings, and activity slots before generating the study plan.")
+
+            tasks = get_tasks_for_student(student_id)
+            open_tasks = [task for task in tasks if task[9] != "completed"]
+
+            if open_tasks:
+                latest_deadline = max(task[6] for task in open_tasks)
+            else:
+                latest_deadline = date.today().isoformat()
+
+            review_tab1, review_tab2, review_tab3 = st.tabs(
+                ["Tasks", "Sleep / Wake", "Activity Slots"]
+            )
+
+            with review_tab1:
+                if open_tasks:
+                    for task in open_tasks:
+                        task_id, name, subject, ttype, importance, intensity, dl, est, adj, status, is_spread_learning, preferred_study_days, min_session_hours, max_session_hours = task
+                        render_task_card(task_id, name, subject, ttype, importance, intensity, dl, est, adj, status)
+                else:
+                    st.info("No open tasks found.")
+
+            with review_tab2:
+                pref_rows = get_day_preferences_for_range(
+                    student_id,
+                    date.today().isoformat(),
+                    latest_deadline
+                )
+
+                if pref_rows:
+                    pref_display = pd.DataFrame([
+                        {
+                            "date": study_date,
+                            "wake_time": wake_str,
+                            "sleep_time": sleep_str
+                        }
+                        for study_date, wake_str, sleep_str in pref_rows
+                    ])
+                    st.dataframe(pref_display, width="stretch", hide_index=True)
+                else:
+                    st.info("No sleep / wake preferences saved for this planning period.")
+
+            with review_tab3:
+                slot_rows = get_activity_slots_for_range(
+                    student_id,
+                    date.today().isoformat(),
+                    latest_deadline
+                )
+
+                if slot_rows:
+                    slot_display_rows = []
+
+                    for slot_id, study_date, start_time_str, end_time_str, reason in slot_rows:
+                        start_dt = datetime.strptime(start_time_str, "%H:%M")
+                        end_dt = datetime.strptime(end_time_str, "%H:%M")
+                        duration_hours = round((end_dt - start_dt).seconds / 3600, 2)
+
+                        slot_display_rows.append({
+                            "study_date": study_date,
+                            "start_time": start_time_str,
+                            "end_time": end_time_str,
+                            "reason": reason,
+                            "duration_hours": duration_hours
+                        })
+
+                    slot_df = pd.DataFrame(slot_display_rows)
+                    st.dataframe(slot_df, width="stretch", hide_index=True)
+                else:
+                    st.info("No activity slots saved for this planning period.")
+
+            st.markdown("---")
+
             if st.button("Build Study Plan"):
 
                 plan_result = build_study_plan(student_id)
