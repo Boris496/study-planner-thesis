@@ -45,6 +45,7 @@ from Database import (
     get_ai_learning_preferences_for_student,
     update_task,
     update_activity_slot,
+    mark_onboarding_seen,
 
 )
 
@@ -1014,9 +1015,61 @@ def render_ai_help_section(student_name: str):
 # -----------------------------
 # Student pages
 # -----------------------------
+
+@st.dialog("Welcome to the Personalized Study Planner")
+def render_onboarding_dialog(student_id: str, student_name: str):
+
+    st.markdown(f"""
+Welcome **{student_name}**!
+
+This study planner helps you create realistic study schedules based on your tasks, deadlines, availability, and study preferences.
+
+### How to use the planner
+
+**1. Add tasks**
+- Go to Planning Setup → Task Setup
+- Enter your assignments, exams, deadlines, and estimated hours
+
+**2. Add daily availability**
+- Go to Planning Setup → Daily Context Setup
+- Enter wake/sleep times and activities such as work, classes, sports, or social events
+
+**3. Generate a study plan**
+- Review your information
+- Click Build Study Plan
+
+**4. Follow your plan**
+- View your calendar in Saved Study Plan
+
+**5. Submit feedback**
+- After studying, provide feedback about concentration, confidence, difficulty, and actual study time
+
+The planner uses this information to generate more personalized schedules over time.
+
+### Need help?
+
+If you have questions:
+- Ask the AI Assistant on the Dashboard
+- Use the Help Navigator page
+
+Enjoy planning!
+""")
+
+    if st.button("Start using the planner"):
+        mark_onboarding_seen(student_id)
+        st.rerun()
+
 def render_student_dashboard_home(student_id: str, student_name: str):
     st.title("Personalized Workload-Aware Study Planner")
     st.subheader(f"Welcome, {student_name} ({student_id})")
+
+    student_row = get_student(student_id)
+
+    if student_row:
+        has_seen_onboarding = student_row[3]
+
+        if not has_seen_onboarding:
+            render_onboarding_dialog(student_id, student_name)
 
     st.markdown("### Today's Study Plan")
 

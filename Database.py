@@ -94,13 +94,19 @@ def init_db():
         CREATE TABLE IF NOT EXISTS students (
             student_id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
-            is_active BOOLEAN NOT NULL DEFAULT TRUE
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            has_seen_onboarding BOOLEAN NOT NULL DEFAULT FALSE
         )
     """)
 
     cursor.execute("""
         ALTER TABLE students
         ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE
+    """)
+
+    cursor.execute("""
+        ALTER TABLE students
+        ADD COLUMN IF NOT EXISTS has_seen_onboarding BOOLEAN NOT NULL DEFAULT FALSE
     """)
 
     # -----------------------------
@@ -488,7 +494,7 @@ def get_student(student_id: str):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT student_id, name, is_active
+        SELECT student_id, name, is_active, has_seen_onboarding
         FROM students
         WHERE student_id = %s
     """, (student_id,))
@@ -497,6 +503,20 @@ def get_student(student_id: str):
     cursor.close()
     conn.close()
     return student
+
+def mark_onboarding_seen(student_id: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE students
+        SET has_seen_onboarding = TRUE
+        WHERE student_id = %s
+    """, (student_id,))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 
 def create_student(student_id: str, name: str):
