@@ -824,6 +824,10 @@ def group_history_by_task(history):
             actual_hours,
             completed,
             remaining_hours,
+            perceived_difficulty,
+            mental_effort,
+            confidence_level,
+            focus_level,
             logged_at
         ) = row
 
@@ -912,6 +916,10 @@ def get_feedback_reminder_tasks(student_id: str):
             actual_hours,
             completed,
             remaining_hours,
+            perceived_difficulty,
+            mental_effort,
+            confidence_level,
+            focus_level,
             logged_at
         ) = row
 
@@ -2800,7 +2808,7 @@ def render_feedback_page(student_id: str):
                 if row[1] == active_reflection_task_id
             ]
 
-            latest_feedback_rows.sort(key=lambda row: row[15], reverse=True)
+            latest_feedback_rows.sort(key=lambda row: row[-1], reverse=True)
             latest_feedback = latest_feedback_rows[0] if latest_feedback_rows else None
 
             ai_reply = generate_feedback_reflection(
@@ -3547,6 +3555,10 @@ def render_history_page(student_id: str):
                     actual_hours,
                     completed,
                     remaining_hours,
+                    perceived_difficulty,
+                    mental_effort,
+                    confidence_level,
+                    focus_level,
                     logged_at
                 ) = row
 
