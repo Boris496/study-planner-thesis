@@ -1077,6 +1077,15 @@ Schema:
 
 Only include planner adjustments if they logically follow from the reflection conversation.
 If the student completed the task faster because it was familiar, do not add extra buffer.
+Only recommend shorter sessions when the reflection conversation contains evidence that session length contributed to reduced focus, fatigue, or performance.
+Do not recommend shorter sessions solely because a task was difficult or mentally demanding.
+Only set max_session_hours when the student explicitly indicates that:
+- concentration dropped during longer sessions,
+- the session felt too long,
+- fatigue increased during the session,
+- or shorter blocks would likely improve focus or performance.
+
+If the task was difficult but focus remained good, prefer a time buffer or high-energy preference instead of shorter sessions.
 Time buffer decision rule:
 - Original estimated hours: {estimated_hours}
 - Planned / adjusted hours used by the planner: {adjusted_hours}
