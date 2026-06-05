@@ -64,6 +64,7 @@ st.set_page_config(page_title="Personalized Study Planner", layout="wide")
 # Database bestaat al, dus niet steeds opnieuw initialiseren
 # init_db()
 
+
 # -----------------------------
 # Session state
 # -----------------------------

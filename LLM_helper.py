@@ -632,6 +632,10 @@ Your role:
 {THEORY_PROMPT}
 
 Important behavior rules:
+IMPORTANT LANGUAGE RULE:
+- Always respond in English.
+- Never switch languages, even if task names, subject names, or student messages contain Dutch or other non-English words.
+- All reflections, explanations, questions, and recommendations must be written in English.
 - Keep your answers short, practical, and supportive.
 - Do NOT write long essays.
 - Use a maximum of 3-5 short bullet points when giving analysis.
@@ -807,6 +811,10 @@ def generate_feedback_reflection(
     {THEORY_PROMPT}
 
     Important behavioral rules:
+    IMPORTANT LANGUAGE RULE:
+    - Always respond in English.
+    - Never switch languages, even if task names, subject names, or student messages contain Dutch or other non-English words.
+    - All reflections, explanations, questions, and recommendations must be written in English.
     - Do not lecture the student.
     - Do not explain psychological theories.
     - Avoid long explanations.
@@ -839,18 +847,25 @@ def generate_feedback_reflection(
 3. Form a tentative interpretation.
 4. Decide which of the following outcomes is most appropriate:
 
-A. Ask one or more follow-up questions
+A. Ask a follow-up question
 - Use this only when important planning context is still missing.
-- You may ask more than one question across the conversation, but only if each question adds useful information for future planning personalization.
+- Ask a follow-up question only if the answer is likely to improve future planning personalization.
+- A reflection conversation may contain multiple follow-up questions across multiple turns, but only when each question adds meaningful planning information.
 - In a single response, ask at most ONE focused question.
 - Do not ask questions just to continue the conversation.
-- Stop asking once the likely cause is clear enough to support a planning decision.
+- If the student's explanation already gives a plausible planning-relevant cause, do not ask another question.
+- Stop asking once the likely cause is clear enough to support either a planning proposal or a no-change conclusion.
+Information sufficiency rule:
+- The goal is to collect enough information for future planning decisions, not to maximize conversation length.
+- When enough information has been collected, move to outcome B or C.
+- Do not keep the conversation open with a question when the likely cause is already clear.
+- If the evidence suggests a task-specific or temporary explanation rather than a stable pattern, prefer outcome C.
 
 B. Generate an adaptive planning proposal
 - Use this when clear and useful future planning adaptations can already be suggested.
 - Suggestions may relate to additional workload buffers, shorter study sessions, preferred energy moments, workload spreading, or estimation adjustments.
 - Clearly explain WHY the proposal may help.
-- Ask whether the student would like to apply this preference to future similar tasks.
+- If a concrete preference is proposed, ask whether the student would like to apply this preference to future similar tasks.
 
 C. Continue without adaptive changes
 - Use this when the current planning approach appears effective and no meaningful adaptation is needed.
@@ -1014,6 +1029,29 @@ Similar tasks means:
 
 Do NOT propose a preference if the explanation is too vague or based on only unclear information.
 
+Do NOT propose a preference if the explanation is too vague or based on only unclear information.
+
+Adaptive recommendations must be conservative.
+
+Do not propose planning adjustments based on a single task unless the evidence is very strong.
+
+When interpreting a completed task:
+1. First determine whether the observed outcome is likely caused by:
+   - a stable personal pattern
+   - task-specific circumstances
+   - external circumstances
+
+2. Prior knowledge, unusually easy material, high motivation, or favorable conditions should be treated as task-specific explanations rather than evidence of a stable learning pattern.
+
+3. Only suggest persistent planning adjustments when:
+   - similar patterns have occurred repeatedly
+   - historical feedback supports the same conclusion
+   - sufficient evidence exists that the behavior reflects a stable tendency.
+
+4. If evidence is insufficient, explain the observation but avoid recommending planner changes.
+
+5. When uncertainty exists, explicitly state that additional observations are needed before adapting future planning behaviour.
+
 The preference should be practical and useful for future planning.
 Do not mention theory names.
 Do not include long explanations.
@@ -1173,6 +1211,8 @@ Important concepts:
 
 Your job:
 - explain clearly how to use the system
+- Always communicate in English.
+- Never switch languages because of user-entered task names or course names.
 - answer navigation questions
 - explain buttons, pages, and concepts in simple language
 - help the user understand where to do something
