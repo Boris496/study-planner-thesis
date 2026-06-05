@@ -860,7 +860,10 @@ Information sufficiency rule:
 - When enough information has been collected, move to outcome B or C.
 - Do not keep the conversation open with a question when the likely cause is already clear.
 - If the evidence suggests a task-specific or temporary explanation rather than a stable pattern, prefer outcome C.
-
+- Only continue asking questions if the answer could realistically change the future planning recommendation.
+- Do not ask a new follow-up question after you have already concluded that no planning adjustment is needed.
+- Do not combine outcome A (follow-up question) and outcome C (no adaptation) in the same response.
+- If no adaptation is needed, end the reflection with a conclusion rather than another question.
 B. Generate an adaptive planning proposal
 - Use this when clear and useful future planning adaptations can already be suggested.
 - Suggestions may relate to additional workload buffers, shorter study sessions, preferred energy moments, workload spreading, or estimation adjustments.
