@@ -2848,7 +2848,8 @@ def render_feedback_page(student_id: str):
                 return
 
             proposal_has_changes = (
-                    int(current_proposal.get("add_time_buffer_percent", 0) or 0) > 0
+                    current_proposal.get("proposal_text") is not None
+                    or int(current_proposal.get("add_time_buffer_percent", 0) or 0) > 0
                     or current_proposal.get("preferred_energy") is not None
                     or current_proposal.get("max_session_hours") is not None
                     or bool(current_proposal.get("avoid_after_high_difficulty_task", False))
@@ -2884,17 +2885,18 @@ def render_feedback_page(student_id: str):
                 accepted_max_session = None
                 accepted_avoid_after = False
 
-                if proposed_buffer > 0:
-                    accepted_buffer = st.selectbox(
-                        "Extra time buffer for future similar tasks",
-                        ["10%", "20%", "30%"],
-                        index=["10%", "20%", "30%"].index(f"{proposed_buffer}%")
-                        if f"{proposed_buffer}%" in ["10%", "20%", "30%"]
-                        else 0,
-                        key=f"edit_ai_buffer_{active_reflection_task_id}"
-                    )
+                buffer_options = ["0%", "10%", "20%", "30%"]
 
-                    accepted_buffer = int(accepted_buffer.replace("%", ""))
+                accepted_buffer = st.selectbox(
+                    "Extra time buffer for future similar tasks",
+                    buffer_options,
+                    index=buffer_options.index(f"{proposed_buffer}%")
+                    if f"{proposed_buffer}%" in buffer_options
+                    else 0,
+                    key=f"edit_ai_buffer_{active_reflection_task_id}"
+                )
+
+                accepted_buffer = int(accepted_buffer.replace("%", ""))
 
                 if proposed_energy is not None:
                     accepted_energy = st.selectbox(

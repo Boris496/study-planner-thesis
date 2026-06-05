@@ -1065,7 +1065,7 @@ Schema:
 {{
   "has_proposal": <true | false>,
   "proposal_text": <short string or null>,
-  "add_time_buffer_percent": <0 | 10 | 20 | 30>,
+  "add_time_buffer_percent": <F0 | 10 | 20 | 30>,
   "preferred_energy": <"High" | "Medium" | "Low" | null>,
   "max_session_hours": <0.5 | 1.0 | 1.5 | null>,
   "avoid_after_high_difficulty_task": <true | false>,
@@ -1100,6 +1100,14 @@ Time buffer decision rule:
 - Original estimated hours: {estimated_hours}
 - Planned / adjusted hours used by the planner: {adjusted_hours}
 - Actual hours spent: {actual_hours}
+Existing buffer removal rule:
+- When evaluating whether an existing time buffer is still necessary, compare actual hours with both:
+  - the student's original estimated hours
+  - the planned / adjusted hours including any buffer
+- Do not treat successful completion within buffered planned time as proof that the buffer is still needed.
+- If the student repeatedly completes similar tasks close to the original estimated hours, the existing buffer may no longer be necessary.
+- The system may propose add_time_buffer_percent = 0 to remove or reset an earlier buffer.
+- Only propose removing a buffer when historical feedback suggests the student no longer needs extra time for similar tasks.
 - When deciding whether to suggest a larger time buffer, compare actual hours mainly with the planned / adjusted hours.
 - Do not suggest increasing the buffer further if actual hours are already close to the adjusted planned hours.
 - Small differences between adjusted planned hours and actual hours should be treated as normal estimation variation.
