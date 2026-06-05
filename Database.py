@@ -1371,6 +1371,10 @@ def get_history_for_student(student_id: str):
             actual_hours,
             completed,
             remaining_hours,
+            perceived_difficulty,
+            mental_effort,
+            confidence_level,
+            focus_level,
             TO_CHAR(logged_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS logged_at
         FROM task_history
         WHERE student_id = %s

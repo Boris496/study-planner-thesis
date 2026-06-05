@@ -2795,20 +2795,28 @@ def render_feedback_page(student_id: str):
 
             reply_context_text = build_current_reflection_context()
 
+            latest_feedback_rows = [
+                row for row in get_history_for_student(student_id)
+                if row[1] == active_reflection_task_id
+            ]
+
+            latest_feedback_rows.sort(key=lambda row: row[15], reverse=True)
+            latest_feedback = latest_feedback_rows[0] if latest_feedback_rows else None
+
             ai_reply = generate_feedback_reflection(
                 student_name=st.session_state.student_name,
                 task_name=loaded_task_name,
                 subject=loaded_subject,
                 task_type=loaded_task_type,
-                estimated_hours=float(loaded_estimated_hours),
-                adjusted_hours=float(loaded_adjusted_hours),
-                actual_hours=0.0,
-                remaining_hours=float(loaded_adjusted_hours),
-                completed=loaded_status == "completed",
-                perceived_difficulty=None,
-                mental_effort=None,
-                confidence_level=None,
-                focus_level=None,
+                estimated_hours=float(latest_feedback[6]) if latest_feedback else float(loaded_estimated_hours),
+                adjusted_hours=float(latest_feedback[7]) if latest_feedback else float(loaded_adjusted_hours),
+                actual_hours=float(latest_feedback[8]) if latest_feedback else 0.0,
+                remaining_hours=float(latest_feedback[10]) if latest_feedback else float(loaded_adjusted_hours),
+                completed=bool(latest_feedback[9]) if latest_feedback else loaded_status == "completed",
+                perceived_difficulty=latest_feedback[11] if latest_feedback else None,
+                mental_effort=latest_feedback[12] if latest_feedback else None,
+                confidence_level=latest_feedback[13] if latest_feedback else None,
+                focus_level=latest_feedback[14] if latest_feedback else None,
                 student_context=reply_context_text,
                 chat_history=updated_chat_history
             )
@@ -2880,7 +2888,6 @@ def render_feedback_page(student_id: str):
                 proposed_session = current_proposal.get("max_session_hours")
                 proposed_avoid_after = bool(current_proposal.get("avoid_after_high_difficulty_task", False))
 
-                accepted_buffer = 0
                 accepted_energy = None
                 accepted_max_session = None
                 accepted_avoid_after = False
