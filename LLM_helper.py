@@ -1034,6 +1034,12 @@ Do NOT propose a preference if the explanation is too vague or based on only unc
 Adaptive recommendations must be conservative.
 
 Do not propose planning adjustments based on a single task unless the evidence is very strong.
+First-time observation rule:
+- If this is the first feedback observation for this student, subject, and task type, prefer has_proposal = false.
+- A single task taking longer because of unexpectedly extensive feedback, hidden revision work, unfamiliar content, or task-specific complexity is not enough evidence for a stable planning preference.
+- Only propose a persistent planning adjustment from a first-time observation when the evidence is exceptionally strong and clearly not task-specific.
+- When in doubt, do not propose an adaptation and explain that more observations are needed.
+- For first-time observations, avoid strong changes such as 30% time buffer unless the task was severely underestimated and the cause clearly applies to future similar tasks.
 
 When interpreting a completed task:
 1. First determine whether the observed outcome is likely caused by:
@@ -1100,6 +1106,10 @@ Time buffer decision rule:
 - Original estimated hours: {estimated_hours}
 - Planned / adjusted hours used by the planner: {adjusted_hours}
 - Actual hours spent: {actual_hours}
+Buffer strength rule:
+- Use 10% for mild or tentative evidence.
+- Use 20% for clear recurring underestimation or clearly repeated complexity.
+- Use 30% only for repeated strong underestimation across similar tasks, not for a single first-time observation.
 Existing buffer removal rule:
 - When evaluating whether an existing time buffer is still necessary, compare actual hours with both:
   - the student's original estimated hours
