@@ -43,6 +43,7 @@ from Database import (
     get_due_feedback_tasks,
     save_ai_learning_preference,
     get_ai_learning_preferences_for_student,
+    get_ai_learning_preferences_for_task,
     update_task,
     update_activity_slot,
     mark_onboarding_seen,
@@ -2721,6 +2722,7 @@ def render_feedback_page(student_id: str):
                 "subject": proposal_subject,
                 "task_type": proposal_task_type,
                 "proposal_text": proposal["proposal_text"],
+                "change_time_buffer": proposal.get("change_time_buffer", False),
                 "add_time_buffer_percent": proposal.get("add_time_buffer_percent", 0),
                 "preferred_energy": proposal.get("preferred_energy"),
                 "max_session_hours": proposal.get("max_session_hours"),
@@ -2734,6 +2736,7 @@ def render_feedback_page(student_id: str):
                 "subject": proposal_subject,
                 "task_type": proposal_task_type,
                 "proposal_text": None,
+                "change_time_buffer": False,
                 "add_time_buffer_percent": 0,
                 "preferred_energy": None,
                 "max_session_hours": None,
@@ -2821,10 +2824,10 @@ def render_feedback_page(student_id: str):
                 actual_hours=float(latest_feedback[8]) if latest_feedback else 0.0,
                 remaining_hours=float(latest_feedback[10]) if latest_feedback else float(loaded_adjusted_hours),
                 completed=bool(latest_feedback[9]) if latest_feedback else loaded_status == "completed",
-                perceived_difficulty=latest_feedback[11] if latest_feedback else None,
-                mental_effort=latest_feedback[12] if latest_feedback else None,
-                confidence_level=latest_feedback[13] if latest_feedback else None,
-                focus_level=latest_feedback[14] if latest_feedback else None,
+                perceived_difficulty=latest_feedback[11] if latest_feedback and len(latest_feedback) > 11 else None,
+                mental_effort=latest_feedback[12] if latest_feedback and len(latest_feedback) > 12 else None,
+                confidence_level=latest_feedback[13] if latest_feedback and len(latest_feedback) > 13 else None,
+                focus_level=latest_feedback[14] if latest_feedback and len(latest_feedback) > 14 else None,
                 student_context=reply_context_text,
                 chat_history=updated_chat_history
             )
@@ -2863,9 +2866,11 @@ def render_feedback_page(student_id: str):
 
                 return
 
+            change_time_buffer = bool(current_proposal.get("change_time_buffer", False))
+
             proposal_has_changes = (
                     current_proposal.get("proposal_text") is not None
-                    or int(current_proposal.get("add_time_buffer_percent", 0) or 0) > 0
+                    or change_time_buffer
                     or current_proposal.get("preferred_energy") is not None
                     or current_proposal.get("max_session_hours") is not None
                     or bool(current_proposal.get("avoid_after_high_difficulty_task", False))
@@ -2896,22 +2901,24 @@ def render_feedback_page(student_id: str):
                 proposed_session = current_proposal.get("max_session_hours")
                 proposed_avoid_after = bool(current_proposal.get("avoid_after_high_difficulty_task", False))
 
+                accepted_buffer = None
                 accepted_energy = None
                 accepted_max_session = None
-                accepted_avoid_after = False
+                accepted_avoid_after = None
 
-                buffer_options = ["0%", "10%", "20%", "30%"]
+                if change_time_buffer:
+                    buffer_options = ["0%", "10%", "20%", "30%"]
 
-                accepted_buffer = st.selectbox(
-                    "Extra time buffer for future similar tasks",
-                    buffer_options,
-                    index=buffer_options.index(f"{proposed_buffer}%")
-                    if f"{proposed_buffer}%" in buffer_options
-                    else 0,
-                    key=f"edit_ai_buffer_{active_reflection_task_id}"
-                )
+                    accepted_buffer = st.selectbox(
+                        "Extra time buffer for future similar tasks",
+                        buffer_options,
+                        index=buffer_options.index(f"{proposed_buffer}%")
+                        if f"{proposed_buffer}%" in buffer_options
+                        else 0,
+                        key=f"edit_ai_buffer_{active_reflection_task_id}"
+                    )
 
-                accepted_buffer = int(accepted_buffer.replace("%", ""))
+                    accepted_buffer = int(accepted_buffer.replace("%", ""))
 
                 if proposed_energy is not None:
                     accepted_energy = st.selectbox(
@@ -2944,15 +2951,38 @@ def render_feedback_page(student_id: str):
 
                 with col_accept:
                     if st.button("Accept suggestion", key=f"accept_ai_preference_{active_reflection_task_id}"):
+                        existing_preferences = get_ai_learning_preferences_for_task(
+                            student_id=student_id,
+                            task_type=current_proposal["task_type"],
+                            subject=current_proposal["subject"]
+                        )
+
+                        latest_existing_preference = existing_preferences[0] if existing_preferences else None
+
+                        existing_buffer = int(latest_existing_preference[5] or 0) if latest_existing_preference else 0
+                        existing_energy = latest_existing_preference[6] if latest_existing_preference else None
+                        existing_max_session = latest_existing_preference[7] if latest_existing_preference else None
+                        existing_avoid_after = bool(
+                            latest_existing_preference[8]) if latest_existing_preference else False
+
+                        buffer_to_save = int(accepted_buffer) if accepted_buffer is not None else existing_buffer
+                        energy_to_save = accepted_energy if accepted_energy is not None else existing_energy
+                        max_session_to_save = accepted_max_session if accepted_max_session is not None else existing_max_session
+                        avoid_after_to_save = (
+                            bool(accepted_avoid_after)
+                            if accepted_avoid_after is not None
+                            else existing_avoid_after
+                        )
+
                         save_ai_learning_preference(
                             student_id=student_id,
                             task_type=current_proposal["task_type"],
                             subject=current_proposal["subject"],
                             preference_text=accepted_preference_text,
-                            add_time_buffer_percent=int(accepted_buffer),
-                            preferred_energy=accepted_energy,
-                            max_session_hours=accepted_max_session,
-                            avoid_after_high_difficulty_task=bool(accepted_avoid_after),
+                            add_time_buffer_percent=buffer_to_save,
+                            preferred_energy=energy_to_save,
+                            max_session_hours=max_session_to_save,
+                            avoid_after_high_difficulty_task=avoid_after_to_save,
                             status="accepted"
                         )
 
@@ -2980,33 +3010,22 @@ def render_feedback_page(student_id: str):
                     st.session_state.feedback_reflection_task_id = None
                     st.rerun()
 
-
         else:
-
             user_messages = [
-
                 row for row in displayed_rows
-
                 if row[0] == "user"
-
             ]
 
             assistant_messages = [
-
                 row for row in displayed_rows
-
                 if row[0] == "assistant"
-
             ]
 
             latest_assistant_message = assistant_messages[-1][1] if assistant_messages else ""
-
             assistant_is_asking_question = "?" in latest_assistant_message
 
             if len(user_messages) > 0 and not assistant_is_asking_question:
-
                 st.markdown("---")
-
                 st.info("If the reflection feels complete, you can finish it and continue.")
 
                 if st.button("Finish reflection", key=f"finish_reflection_{active_reflection_task_id}"):
@@ -3014,42 +3033,26 @@ def render_feedback_page(student_id: str):
                     finish_context_text = build_current_reflection_context()
 
                     create_pending_proposal(
-
                         proposal_task_id=active_reflection_task_id,
-
                         proposal_task_name=loaded_task_name,
-
                         proposal_subject=loaded_subject,
-
                         proposal_task_type=loaded_task_type,
-
                         proposal_context_text=finish_context_text
-
                     )
 
                     if st.session_state.get("pending_ai_preference_proposal") is None:
                         st.session_state.pending_ai_preference_proposal = {
-
                             "task_id": active_reflection_task_id,
-
                             "subject": loaded_subject,
-
                             "task_type": loaded_task_type,
-
                             "proposal_text": None,
-
+                            "change_time_buffer": False,
                             "add_time_buffer_percent": 0,
-
                             "preferred_energy": None,
-
                             "max_session_hours": None,
-
                             "avoid_after_high_difficulty_task": False,
-
                             "reason": "No planning adjustment needed.",
-
                             "has_proposal": False
-
                         }
 
                     st.rerun()

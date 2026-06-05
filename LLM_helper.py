@@ -1078,12 +1078,18 @@ Schema:
 {{
   "has_proposal": <true | false>,
   "proposal_text": <short string or null>,
-  "add_time_buffer_percent": <F0 | 10 | 20 | 30>,
+  "change_time_buffer": <true | false>,
+  "add_time_buffer_percent": <0 | 10 | 20 | 30>,
   "preferred_energy": <"High" | "Medium" | "Low" | null>,
   "max_session_hours": <0.5 | 1.0 | 1.5 | null>,
   "avoid_after_high_difficulty_task": <true | false>,
   "reason": <short string>
 }}
+Buffer visibility rule:
+- Set change_time_buffer to true only when the proposal is specifically about adding, increasing, reducing, or removing a time buffer.
+- If the proposal is not about time buffer, set change_time_buffer to false, even if add_time_buffer_percent is 0.
+- If change_time_buffer is false, add_time_buffer_percent must be 0.
+- If recommending removal of an existing buffer, set change_time_buffer to true and add_time_buffer_percent to 0.
 
 Only include planner adjustments if they logically follow from the reflection conversation.
 If the student completed the task faster because it was familiar, do not add extra buffer.
@@ -1096,6 +1102,9 @@ If a task was completed faster than expected with very low difficulty and low me
 - If there is only one efficient task and no repeated historical pattern, set has_proposal to false.
 
 Preferred energy decision rule:
+- Do not infer preferred_energy from confidence issues alone.
+- Low confidence, presentation anxiety, performance concerns, or fear of making mistakes are not evidence that a task should be scheduled at a higher energy level.
+- Only recommend preferred_energy when there is clear evidence that performance, concentration, motivation, or fatigue is affected by the student's energy state.
 - Only set preferred_energy to "High" when the reflection conversation or historical feedback suggests that similar tasks require stronger focus, confidence, or mental energy.
 - Only set preferred_energy to "Low" when there is repeated evidence that similar tasks remain effective in low-energy moments.
 - Do not infer preferred_energy from a single efficient task.
@@ -1188,6 +1197,11 @@ Reflection conversation:
         return {
             "has_proposal": False,
             "proposal_text": None,
+            "change_time_buffer": False,
+            "add_time_buffer_percent": 0,
+            "preferred_energy": None,
+            "max_session_hours": None,
+            "avoid_after_high_difficulty_task": False,
             "reason": "Could not parse proposal."
         }
 
