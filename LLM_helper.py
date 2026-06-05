@@ -1100,6 +1100,12 @@ Only set max_session_hours when the student explicitly indicates that:
 - the session felt too long,
 - fatigue increased during the session,
 - or shorter blocks would likely improve focus or performance.
+Default break rule:
+- The planner already inserts a 20-minute break after 1.5 hours of continuous study.
+- Do not recommend max_session_hours = 1.5 as an adaptive preference, because this is already the default planner behavior.
+- Only recommend max_session_hours when the student needs shorter-than-default sessions, such as 1.0 or 0.5 hours.
+- If concentration drops after about 90 minutes, do not create a new max_session_hours preference because the planner already handles this with automatic breaks.
+- If concentration drops before 90 minutes, a shorter max_session_hours preference may be useful.
 
 If the task was difficult but focus remained good, prefer a time buffer or high-energy preference instead of shorter sessions.
 Time buffer decision rule:
