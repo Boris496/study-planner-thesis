@@ -3036,31 +3036,7 @@ def render_feedback_page(student_id: str):
                         }
 
                     st.rerun()
-                finish_context_text = build_current_reflection_context()
 
-                create_pending_proposal(
-                    proposal_task_id=active_reflection_task_id,
-                    proposal_task_name=loaded_task_name,
-                    proposal_subject=loaded_subject,
-                    proposal_task_type=loaded_task_type,
-                    proposal_context_text=finish_context_text
-                )
-
-                if st.session_state.get("pending_ai_preference_proposal") is None:
-                    st.session_state.pending_ai_preference_proposal = {
-                        "task_id": active_reflection_task_id,
-                        "subject": loaded_subject,
-                        "task_type": loaded_task_type,
-                        "proposal_text": None,
-                        "add_time_buffer_percent": 0,
-                        "preferred_energy": None,
-                        "max_session_hours": None,
-                        "avoid_after_high_difficulty_task": False,
-                        "reason": "No planning adjustment needed.",
-                        "has_proposal": False
-                    }
-
-                st.rerun()
 
     active_reflection_id = st.session_state.get("feedback_reflection_task_id")
 
