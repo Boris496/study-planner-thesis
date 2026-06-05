@@ -1102,27 +1102,34 @@ If a task was completed faster than expected with very low difficulty and low me
 - If there is only one efficient task and no repeated historical pattern, set has_proposal to false.
 
 Preferred energy decision rule:
+- preferred_energy refers to the student's preferred energy state or time-of-day suitability for similar tasks.
 - Do not infer preferred_energy from confidence issues alone.
 - Low confidence, presentation anxiety, performance concerns, or fear of making mistakes are not evidence that a task should be scheduled at a higher energy level.
-- Only recommend preferred_energy when there is clear evidence that performance, concentration, motivation, or fatigue is affected by the student's energy state.
-- Only set preferred_energy to "High" when the reflection conversation or historical feedback suggests that similar tasks require stronger focus, confidence, or mental energy.
-- Only set preferred_energy to "Low" when there is repeated evidence that similar tasks remain effective in low-energy moments.
+- Only recommend preferred_energy when there is clear evidence that task performance was affected by timing, energy level, fatigue, concentration, or productivity at different moments of the day.
+- Only set preferred_energy to "High" when the student explicitly indicates that similar tasks are more effective during high-energy periods or that low-energy moments negatively affect performance.
+- Only set preferred_energy to "Medium" when the student explicitly indicates that similar tasks do not require peak energy but also should not be placed in low-energy moments.
+- Only set preferred_energy to "Low" when there is repeated evidence that similar tasks remain effective during low-energy periods.
 - Do not infer preferred_energy from a single efficient task.
-- If preferred_energy is not clearly supported, set preferred_energy to null.
-Only recommend shorter sessions when the reflection conversation contains evidence that session length contributed to reduced focus, fatigue, or performance.
-Do not recommend shorter sessions solely because a task was difficult or mentally demanding.
-Only set max_session_hours when the student explicitly indicates that:
-- concentration dropped during longer sessions,
-- the session felt too long,
-- fatigue increased during the session,
-- or shorter blocks would likely improve focus or performance.
+- Do not recommend preferred_energy merely because a task is difficult, mentally demanding, complex, research-heavy, writing-intensive, or took longer than expected.
+- Difficulty, mental effort, and additional time spent are not evidence of an energy preference.
+- Research, revision, rewriting, studying longer than expected, or producing higher-quality work are reasons for a time buffer, not for an energy preference.
+- If no timing, energy, fatigue, concentration, or productivity-related cause is mentioned, set preferred_energy to null.
+
+Session length decision rule:
+- Only recommend shorter sessions when the reflection conversation contains evidence that session length contributed to reduced focus, fatigue, or performance.
+- Do not recommend shorter sessions solely because a task was difficult or mentally demanding.
+- Only set max_session_hours when the student explicitly indicates that:
+  - concentration dropped during longer sessions,
+  - the session felt too long,
+  - fatigue increased during the session,
+  - or shorter blocks would likely improve focus or performance.
+
 Default break rule:
 - The planner already inserts a 20-minute break after 1.5 hours of continuous study.
 - Do not recommend max_session_hours = 1.5 as an adaptive preference, because this is already the default planner behavior.
 - Only recommend max_session_hours when the student needs shorter-than-default sessions, such as 1.0 or 0.5 hours.
 - If concentration drops after about 90 minutes, do not create a new max_session_hours preference because the planner already handles this with automatic breaks.
 - If concentration drops before 90 minutes, a shorter max_session_hours preference may be useful.
-
 If the task was difficult but focus remained good, prefer a time buffer or high-energy preference instead of shorter sessions.
 Time buffer decision rule:
 - Original estimated hours: {estimated_hours}
