@@ -1031,9 +1031,6 @@ Similar tasks means:
 - same task type
 
 Do NOT propose a preference if the explanation is too vague or based on only unclear information.
-
-Do NOT propose a preference if the explanation is too vague or based on only unclear information.
-
 Adaptive recommendations must be conservative.
 
 Do not propose planning adjustments based on a single task unless the evidence is very strong.
@@ -1077,6 +1074,19 @@ Schema:
 
 Only include planner adjustments if they logically follow from the reflection conversation.
 If the student completed the task faster because it was familiar, do not add extra buffer.
+
+If a task was completed faster than expected with very low difficulty and low mental effort:
+- First consider whether prior knowledge, familiarity, review effects, or task-specific circumstances could explain the result.
+- Do not reduce future estimates based on a single efficient task.
+- Do not infer a lower preferred energy level from a single efficient task.
+- Require repeated evidence before recommending shorter durations or lower-energy scheduling.
+- If there is only one efficient task and no repeated historical pattern, set has_proposal to false.
+
+Preferred energy decision rule:
+- Only set preferred_energy to "High" when the reflection conversation or historical feedback suggests that similar tasks require stronger focus, confidence, or mental energy.
+- Only set preferred_energy to "Low" when there is repeated evidence that similar tasks remain effective in low-energy moments.
+- Do not infer preferred_energy from a single efficient task.
+- If preferred_energy is not clearly supported, set preferred_energy to null.
 Only recommend shorter sessions when the reflection conversation contains evidence that session length contributed to reduced focus, fatigue, or performance.
 Do not recommend shorter sessions solely because a task was difficult or mentally demanding.
 Only set max_session_hours when the student explicitly indicates that:
