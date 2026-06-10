@@ -1159,6 +1159,30 @@ Existing buffer removal rule:
 If the student needed more time because similar tasks are unpredictable, cognitively demanding, or difficult to sustain, a buffer may be appropriate.
 If the conversation only supports shorter sessions, set max_session_hours but keep add_time_buffer_percent at 0.
 If the conversation only supports more time, set add_time_buffer_percent but do not force shorter sessions.
+Consistency with the reflection conversation:
+- The proposal should remain consistent with recommendations already communicated by the assistant during the reflection conversation.
+- If the assistant has already clearly recommended a planning adjustment, treat this as sufficient evidence for a proposal.
+- Do not return has_proposal = false if the assistant has already recommended a concrete change.
+- Ensure that the returned proposal matches the reasoning and recommendations previously given in the reflection conversation.
+
+Examples:
+If the assistant previously stated:
+"We would recommend adding a small time buffer."
+or
+"Future similar tasks may benefit from more time."
+
+Then return:
+
+{
+  "has_proposal": true,
+  "change_time_buffer": true
+}
+
+rather than:
+
+{
+  "has_proposal": false
+}
 
 The proposal_text should describe what the system should remember for future similar tasks.
 
@@ -1185,6 +1209,10 @@ Student context:
 
 Reflection conversation:
 {conversation_text}
+
+Pay close attention to recommendations already made by the assistant in the reflection conversation.
+The final JSON should remain consistent with those recommendations.
+If the assistant already recommended a concrete planning adjustment, do not return has_proposal = false.
 """
 
     response = client.models.generate_content(
