@@ -2677,6 +2677,30 @@ def render_feedback_page(student_id: str):
         )
 
         if not completion_check.get("enough_information"):
+            latest_assistant_message = ""
+
+            for row in reversed(proposal_rows):
+                if row[0] == "assistant":
+                    latest_assistant_message = row[1]
+                    break
+
+            assistant_is_asking_question = "?" in latest_assistant_message
+
+            if not assistant_is_asking_question:
+                st.session_state.pending_ai_preference_proposal = {
+                    "task_id": proposal_task_id,
+                    "subject": proposal_subject,
+                    "task_type": proposal_task_type,
+                    "proposal_text": None,
+                    "change_time_buffer": False,
+                    "add_time_buffer_percent": 0,
+                    "preferred_energy": None,
+                    "max_session_hours": None,
+                    "avoid_after_high_difficulty_task": False,
+                    "reason": completion_check.get("reason", "No planning adjustment needed."),
+                    "has_proposal": False
+                }
+
             return
 
         latest_feedback_rows = [
@@ -2708,6 +2732,7 @@ def render_feedback_page(student_id: str):
             adjusted_hours=proposal_adjusted_hours,
             actual_hours=proposal_actual_hours
         )
+
 
         if not isinstance(proposal, dict):
             proposal = {
