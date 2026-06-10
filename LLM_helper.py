@@ -1173,16 +1173,16 @@ or
 
 Then return:
 
-{
+{{
   "has_proposal": true,
   "change_time_buffer": true
-}
+}}
 
 rather than:
 
-{
+{{
   "has_proposal": false
-}
+}}
 
 The proposal_text should describe what the system should remember for future similar tasks.
 
