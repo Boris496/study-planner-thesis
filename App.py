@@ -2715,10 +2715,10 @@ def render_feedback_page(student_id: str):
 
         latest_feedback_rows = [
             row for row in get_history_for_student(student_id)
-            if row[1] == proposal_task_id
+            if len(row) > 1 and row[1] == proposal_task_id
         ]
 
-        latest_feedback_rows.sort(key=lambda row: row[11], reverse=True)
+        latest_feedback_rows.sort(key=lambda row: row[-1], reverse=True)
 
         latest_feedback = latest_feedback_rows[0] if latest_feedback_rows else None
 
