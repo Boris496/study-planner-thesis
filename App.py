@@ -2667,6 +2667,16 @@ def render_feedback_page(student_id: str):
             for row in proposal_rows
         ]
 
+        latest_assistant_message = ""
+
+        for row in reversed(proposal_rows):
+            if row[0] == "assistant":
+                latest_assistant_message = row[1]
+                break
+
+        if "?" in latest_assistant_message:
+            return
+
         completion_check = check_reflection_completion(
             student_name=st.session_state.student_name,
             task_name=proposal_task_name,
