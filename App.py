@@ -3867,12 +3867,21 @@ def render_admin_dashboard():
             "Download per student summary as CSV"
         )
 
-        compare_df = per_student_df[
-            ["student_id", "avg_estimation_error", "avg_estimation_ratio"]
-        ].set_index("student_id")
+        st.markdown("### Average estimation error per student")
 
-        st.markdown("### Per student comparison")
-        st.line_chart(compare_df)
+        error_chart_df = per_student_df[
+            ["student_name", "avg_estimation_error"]
+        ].set_index("student_name")
+
+        st.bar_chart(error_chart_df)
+
+        st.markdown("### Average estimation ratio per student")
+
+        ratio_chart_df = per_student_df[
+            ["student_name", "avg_estimation_ratio"]
+        ].set_index("student_name")
+
+        st.bar_chart(ratio_chart_df)
     else:
         st.info("No student feedback data available yet.")
 
@@ -4217,39 +4226,6 @@ def render_admin_learning_profiles():
         st.markdown("### Average profile signals by task type")
         st.bar_chart(grouped_df)
 
-def render_admin_planner_personalization():
-    st.title("Planner Personalization")
-
-    rows = get_planner_personalization_logs()
-
-    if not rows:
-        st.info("No planner personalization logs available yet.")
-        return
-
-    df = pd.DataFrame(rows, columns=[
-        "student_id",
-        "student_name",
-        "task_id",
-        "task_name",
-        "subject",
-        "task_type",
-        "buffer_percent",
-        "preferred_energy",
-        "max_session_hours",
-        "avoid_after_difficult_task",
-        "reason",
-        "created_at"
-    ])
-
-    st.markdown("### LLM-derived planning constraints")
-    st.dataframe(df, width="stretch", hide_index=True)
-
-    st.markdown("### Average buffer by task type")
-
-    chart_df = df.groupby("task_type")["buffer_percent"].mean()
-
-    st.bar_chart(chart_df)
-
 # -----------------------------
 # Sidebar + routing
 # -----------------------------
@@ -4360,14 +4336,13 @@ elif mode == "Admin":
 
         st.title("Admin Menu")
 
-        admin_tab_dashboard, admin_tab_detail, admin_tab_task_type, admin_tab_subject, admin_tab_learning, admin_tab_personalization, admin_tab_accounts = st.tabs(
+        admin_tab_dashboard, admin_tab_detail, admin_tab_task_type, admin_tab_subject, admin_tab_learning, admin_tab_accounts = st.tabs(
             [
                 "Dashboard",
                 "Detailed Analysis",
                 "Task Types",
                 "Subjects",
                 "Learning Profiles",
-                "Planner Personalization",
                 "Student Accounts"
             ])
 
@@ -4385,9 +4360,6 @@ elif mode == "Admin":
 
         with admin_tab_learning:
             render_admin_learning_profiles()
-
-        with admin_tab_personalization:
-            render_admin_planner_personalization()
 
         with admin_tab_accounts:
             render_admin_account_management()
