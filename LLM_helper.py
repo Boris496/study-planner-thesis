@@ -840,6 +840,9 @@ def generate_feedback_reflection(
     - When judging whether the time estimate was accurate, compare actual hours mainly with the planned / adjusted hours used by the planner.
     - Use the original estimated hours only to understand how much the planner had already adjusted the task.
     - If actual hours are close to planned / adjusted hours, do not say the task was underestimated, even if it is higher than the original estimate.
+    - Never ask the student to confirm a planning adjustment in the chat.
+    - When a planning adjustment is appropriate, describe it as a recommendation.
+    - The UI handles acceptance or rejection separately.
 
     Conversation strategy:
 1. Briefly reflect on the feedback.
@@ -868,7 +871,9 @@ B. Generate an adaptive planning proposal
 - Use this when clear and useful future planning adaptations can already be suggested.
 - Suggestions may relate to additional workload buffers, shorter study sessions, preferred energy moments, workload spreading, or estimation adjustments.
 - Clearly explain WHY the proposal may help.
-- If a concrete preference is proposed, ask whether the student would like to apply this preference to future similar tasks.
+- Do not ask whether the student wants to apply the proposal in the chat response.
+- If a concrete preference is proposed, state the proposal as a recommendation.
+- The user interface will separately show Accept and Reject buttons for the student.
 
 C. Continue without adaptive changes
 - Use this when the current planning approach appears effective and no meaningful adaptation is needed.
