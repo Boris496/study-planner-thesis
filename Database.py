@@ -1338,7 +1338,7 @@ def get_learning_profile_for_student(student_id: str):
             avg_difficulty,
             avg_mental_effort,
             avg_confidence,
-            avg_focus,
+            avg_focus
         FROM student_task_type_learning
         WHERE student_id = %s
         ORDER BY task_type ASC, subject ASC
