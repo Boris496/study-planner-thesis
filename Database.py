@@ -1339,7 +1339,6 @@ def get_learning_profile_for_student(student_id: str):
             avg_mental_effort,
             avg_confidence,
             avg_focus,
-            TO_CHAR(updated_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS updated_at
         FROM student_task_type_learning
         WHERE student_id = %s
         ORDER BY task_type ASC, subject ASC

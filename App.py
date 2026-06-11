@@ -4171,7 +4171,7 @@ def render_admin_learning_profiles():
         "avg_mental_effort",
         "avg_confidence",
         "avg_focus",
-        "updated_at"
+
     ])
 
     # Filters
