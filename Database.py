@@ -2424,8 +2424,7 @@ def get_all_learning_profiles():
             l.avg_difficulty,
             l.avg_mental_effort,
             l.avg_confidence,
-            l.avg_focus,
-            TO_CHAR(l.updated_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS updated_at
+            l.avg_focus
         FROM student_task_type_learning l
         LEFT JOIN students s
             ON l.student_id = s.student_id
