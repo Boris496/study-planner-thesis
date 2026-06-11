@@ -22,7 +22,6 @@ from Database import (
     get_admin_summary_per_student,
     get_admin_global_summary,
     get_subject_analysis,
-    get_planner_personalization_logs,
     deactivate_student,
     activate_student,
     delete_student_account,

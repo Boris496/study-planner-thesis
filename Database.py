@@ -1894,35 +1894,6 @@ def get_saved_study_plan(student_id: str):
     conn.close()
     return rows
 
-def get_planner_personalization_logs():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT
-            l.student_id,
-            s.name,
-            l.task_id,
-            l.task_name,
-            l.subject,
-            l.task_type,
-            l.add_time_buffer_percent,
-            l.preferred_energy,
-            l.max_session_hours,
-            l.avoid_after_high_difficulty_task,
-            l.reason,
-            TO_CHAR(l.created_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS created_at
-        FROM planner_personalization_log l
-        LEFT JOIN students s
-            ON l.student_id = s.student_id
-        ORDER BY l.created_at DESC, l.student_id ASC, l.task_id ASC
-    """)
-
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return rows
-
 def get_due_feedback_tasks(student_id: str, current_dt: datetime | None = None):
     if current_dt is None:
         current_dt = datetime.now()
@@ -2190,7 +2161,7 @@ def get_estimation_accuracy_for_all_students():
         if status == "completed":
             actual_total_hours = float(total_actual_hours)
         else:
-            actual_total_hours = float(total_actual_hours) + float(adjusted_hours)
+            continue
 
         if actual_total_hours == 0 or estimated_hours <= 0:
             estimation_error = 0.0
