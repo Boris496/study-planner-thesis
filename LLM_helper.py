@@ -283,7 +283,7 @@ def _format_learning_profile(learning_profile_rows: list) -> str:
             avg_mental_effort,
             avg_confidence,
             avg_focus,
-            updated_at
+
         ) = row
 
         lines.append(
@@ -293,7 +293,7 @@ def _format_learning_profile(learning_profile_rows: list) -> str:
             f"avg effort: {round(float(avg_mental_effort), 2)} | "
             f"avg confidence: {round(float(avg_confidence), 2)} | "
             f"avg focus: {round(float(avg_focus), 2)} | "
-            f"updated at: {updated_at}"
+
         )
 
     return "\n".join(lines)
@@ -1362,7 +1362,7 @@ def _build_learning_profile_lookup(learning_profile_rows: list) -> dict:
             avg_mental_effort,
             avg_confidence,
             avg_focus,
-            updated_at
+
         ) = row
 
         lookup[(task_type, subject)] = {
