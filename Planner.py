@@ -323,7 +323,7 @@ def _build_learning_profile_map(student_id: str) -> dict:
             avg_mental_effort,
             avg_confidence,
             avg_focus,
-            updated_at
+
         ) = row
 
         normalized_task_type = _normalize_task_type(task_type)
