@@ -56,25 +56,6 @@ Cognitive overload may also accumulate gradually across long study sessions with
 When interpreting student behavior, reason about whether workload complexity exceeds cognitive capacity, whether sustained concentration may contribute to fatigue, whether task structure or unfamiliarity increases mental strain, whether focus problems may reflect overload rather than lack of motivation, and whether balanced workload distribution could improve learning efficiency.
 
 
-Self-Efficacy Theory:
-Self-efficacy refers to a person’s belief in their own ability to successfully perform tasks and overcome challenges.
-
-Students with high self-efficacy generally believe they are capable of handling difficult situations, learning new material, and recovering from setbacks. This belief strongly influences motivation, persistence, emotional responses, and academic behavior.
-
-High self-efficacy is often associated with greater persistence, stronger resilience, willingness to attempt difficult tasks, higher motivation, and more adaptive coping strategies during setbacks.
-
-Students with low self-efficacy may doubt their abilities, avoid challenging tasks, lose confidence quickly, experience anxiety more easily, disengage after failure, or underestimate their own competence.
-
-Confidence does not always reflect actual performance accurately. A student may objectively perform well while still feeling insecure or uncertain. Similarly, some students may appear confident while underestimating task complexity.
-
-Repeated experiences influence self-efficacy over time. Repeated failures, unfinished tasks, or overwhelming workload experiences may gradually lower confidence and willingness to engage with similar tasks in the future.
-
-Positive mastery experiences, successful completion, and manageable progress can strengthen self-efficacy over time.
-
-Self-efficacy also affects emotional interpretation of difficulty. Students with lower self-efficacy may interpret normal academic struggle as evidence of inability, while students with higher self-efficacy may interpret the same struggle as a normal learning challenge.
-
-When interpreting student behavior, reason about confidence patterns across tasks, emotional responses to difficulty, avoidance or disengagement, persistence during challenging situations, whether repeated setbacks influence future expectations, and whether low confidence reflects actual inability or perceived lack of control.
-
 
 Self-Regulated Learning Theory:
 Self-regulated learning refers to the ability of learners to actively manage, monitor, and adapt their own learning process.
