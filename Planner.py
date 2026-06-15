@@ -9,7 +9,7 @@ DEFAULT_WAKE_TIME = "07:00"
 DEFAULT_SLEEP_TIME = "23:00"
 
 DAY_LIMIT_HOURS = 7.0
-COGNITIVE_LIMIT_HOURS = 5.0
+PREFERRED_COGNITIVE_LIMIT_HOURS = 5.0
 MAX_STUDY_BLOCK_HOURS = 1.5
 BREAK_DURATION_HOURS = 0.33
 MIN_BLOCK_HOURS = 0.25
@@ -569,7 +569,6 @@ def build_study_plan(student_id: str):
 
         while slot_remaining > 0:
             selected_task = None
-            remaining_cognitive = None
 
             last_task_was_llm_flagged = False
             last_items_today = daily_plan.get(day_str, [])
@@ -646,10 +645,16 @@ def build_study_plan(student_id: str):
 
                 if task["task_type"] in COGNITIVE_TASK_TYPES:
                     used_cognitive = cognitive_hours_per_day.get(day_str, 0.0)
-                    remaining_cognitive = round(COGNITIVE_LIMIT_HOURS - used_cognitive, 2)
+                    remaining_preferred_cognitive = round(
+                        PREFERRED_COGNITIVE_LIMIT_HOURS - used_cognitive,
+                        2
+                    )
 
-                    if remaining_cognitive <= 0:
-                        continue
+                    # Soft constraint:
+                    # Prefer staying within 5 cognitive hours,
+                    # but do not block planning if the daily limit still allows more study.
+                    if remaining_preferred_cognitive <= 0:
+                        pass
 
                 selected_task = task
                 break
@@ -686,7 +691,6 @@ def build_study_plan(student_id: str):
                     remaining_day_capacity,
                     max_session_hours,
                     remaining_until_break,
-                    remaining_cognitive,
                     remaining_task_day_quota
                 )
             else:
