@@ -1522,7 +1522,6 @@ def save_ai_reflection_summary(
     cursor.close()
     conn.close()
 
-
 def get_ai_reflection_summaries_for_student(student_id, subject=None, task_type=None, limit=5):
     conn = get_connection()
     cursor = conn.cursor()

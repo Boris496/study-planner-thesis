@@ -561,7 +561,7 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
         "dayMaxEvents": True,
 
         "slotMinTime": "06:00:00",
-        "slotMaxTime": "23:00:00",
+        "slotMaxTime": "24:00:00",
         "slotDuration": "00:15:00",
         "expandRows": True,
         "allDaySlot": True,
