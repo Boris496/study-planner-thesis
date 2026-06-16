@@ -277,10 +277,25 @@ def render_task_card(task_id, name, subject, task_type, importance, intensity, d
     )
 
 
-def render_history_card(task_name, task_type, subject, importance, estimated, adjusted, actual, completed, remaining, logged_at):
+def render_history_card(
+    task_name,
+    task_type,
+    subject,
+    importance,
+    estimated,
+    adjusted,
+    actual,
+    completed,
+    remaining,
+    logged_at
+):
     completed_text = "Yes" if completed else "No"
     badge_html = importance_badge(importance)
-    status_html = '<span class="badge badge-completed">Completed</span>' if completed else '<span class="badge badge-incomplete">Open / Partial</span>'
+    status_html = (
+        '<span class="badge badge-completed">Completed</span>'
+        if completed
+        else '<span class="badge badge-incomplete">Open / Partial</span>'
+    )
 
     st.markdown(
         f"""
@@ -297,7 +312,6 @@ def render_history_card(task_name, task_type, subject, importance, estimated, ad
             <div><b>Actual worked:</b> {actual} h</div>
             <div><b>Completed:</b> {completed_text}</div>
             <div><b>Remaining:</b> {remaining} h</div>
-            <div class="small-muted" style="margin-top:8px;">Logged at: {logged_at}</div>
         </div>
         """,
         unsafe_allow_html=True
