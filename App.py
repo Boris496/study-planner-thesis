@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from streamlit_calendar import calendar
 
 from Database import (
+    init_db,
     get_student,
     create_student,
     get_tasks_for_student,
@@ -62,7 +63,11 @@ from LLM_helper import (
     generate_reflection_summary,
 )
 
+
 st.set_page_config(page_title="Personalized Study Planner", layout="wide")
+
+# Tijdelijk één keer uitvoeren om nieuwe tabellen/kolommen aan te maken
+init_db()
 
 # Database bestaat al, dus niet steeds opnieuw initialiseren
 # init_db()
@@ -2851,6 +2856,7 @@ def render_feedback_page(student_id: str):
                 summary=summary_result.get("summary"),
                 possible_pattern=summary_result.get("possible_pattern"),
                 confidence_level=summary_result.get("confidence_level"),
+                pattern_stability=summary_result.get("pattern_stability", "task_specific"),
                 planning_relevance=summary_result.get("planning_relevance")
             )
 

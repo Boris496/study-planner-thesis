@@ -503,11 +503,12 @@ def _format_reflection_summaries(summary_rows: list) -> str:
 
     lines = []
     for row in summary_rows:
-        task_name, subject, task_type, summary, possible_pattern, confidence_level, planning_relevance, updated_at = row
+        task_name, subject, task_type, summary, possible_pattern, confidence_level, pattern_stability, planning_relevance, updated_at = row
         lines.append(
             f"- {task_name} | subject: {subject} | type: {task_type} | "
             f"summary: {summary} | possible pattern: {possible_pattern} | "
-            f"confidence: {confidence_level} | planning relevance: {planning_relevance}"
+            f"confidence: {confidence_level} | pattern stability: {pattern_stability} | "
+            f"planning relevance: {planning_relevance}"
         )
 
     return "\n".join(lines)
@@ -1066,8 +1067,12 @@ Adaptive recommendations must be conservative.
 Most reflection conversations should NOT result in a new persistent planning preference.
 
 Only create a proposal when there is sufficient evidence of a recurring pattern across similar tasks.
-Do not avoid proposals entirely. When repeated historical feedback, previous reflection summaries, or existing accepted preferences clearly indicate a stable pattern, generate a concrete proposal.
 Similar tasks means the same student, same subject, and same task type.
+Evidence of a recurring pattern should normally require multiple observations.
+A single task should almost never be sufficient evidence for a persistent planning preference.
+Do not create proposals based on previous reflection summaries whose pattern stability is task_specific.
+Only emerging or recurring patterns may support persistent planning changes.
+Recurring patterns provide stronger evidence than emerging patterns.
 
 Return has_proposal = false when:
 - this is the first observation for this student, subject, and task type,
@@ -1301,6 +1306,7 @@ Schema:
   "summary": <short summary>,
   "possible_pattern": <possible recurring pattern or null>,
   "confidence_level": <"tentative" | "moderate" | "strong">,
+  "pattern_stability": <"task_specific" | "emerging" | "recurring">,
   "planning_relevance": <short explanation of how this may matter for future planning>
 }}
 
@@ -1309,6 +1315,10 @@ Rules:
 - If this seems task-specific, say so.
 - Focus on planning-relevant causes such as hidden work, underestimation, fatigue, focus, difficulty, prior knowledge, motivation, or preferred study conditions.
 - Do not mention theory names.
+- Most observations should initially be classified as task_specific.
+- Use emerging only when there is some indication of repetition across similar tasks.
+- Use recurring only when the same explanation has occurred multiple times for the same student, subject, and task type.
+- Task-specific causes such as unfamiliar material, one difficult chapter, one easy task, or temporary circumstances should be classified as task_specific unless repeated evidence exists.
 
 Student: {student_name}
 Task: {task_name}
@@ -1337,6 +1347,7 @@ Reflection conversation:
             "summary": "Could not summarize reflection conversation.",
             "possible_pattern": None,
             "confidence_level": "tentative",
+            "pattern_stability": "task_specific",
             "planning_relevance": "No reliable planning relevance could be extracted."
         }
 

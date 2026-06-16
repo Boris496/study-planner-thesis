@@ -265,6 +265,7 @@ def init_db():
             summary TEXT NOT NULL,
             possible_pattern TEXT,
             confidence_level TEXT,
+            pattern_stability TEXT,
             planning_relevance TEXT,
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
@@ -272,6 +273,11 @@ def init_db():
             FOREIGN KEY (student_id) REFERENCES students(student_id),
             FOREIGN KEY (task_id) REFERENCES tasks(task_id)
         )
+    """)
+
+    cursor.execute("""
+        ALTER TABLE ai_reflection_summaries
+        ADD COLUMN IF NOT EXISTS pattern_stability TEXT
     """)
 
     # -----------------------------
@@ -1487,7 +1493,7 @@ def get_ai_feedback_reflections(student_id: str, task_id: int):
 
 def save_ai_reflection_summary(
     student_id, task_id, task_name, subject, task_type,
-    summary, possible_pattern, confidence_level, planning_relevance
+    summary, possible_pattern, confidence_level, pattern_stability, planning_relevance
 ):
     conn = get_connection()
     cursor = conn.cursor()
@@ -1495,7 +1501,7 @@ def save_ai_reflection_summary(
     cursor.execute("""
         INSERT INTO ai_reflection_summaries (
             student_id, task_id, task_name, subject, task_type,
-            summary, possible_pattern, confidence_level, planning_relevance,
+            summary, possible_pattern, confidence_level,pattern_stability, planning_relevance,
             created_at, updated_at
         )
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),NOW())
@@ -1504,11 +1510,12 @@ def save_ai_reflection_summary(
             summary = EXCLUDED.summary,
             possible_pattern = EXCLUDED.possible_pattern,
             confidence_level = EXCLUDED.confidence_level,
+            pattern_stability = EXCLUDED.pattern_stability,
             planning_relevance = EXCLUDED.planning_relevance,
             updated_at = NOW()
     """, (
         student_id, task_id, task_name, subject, task_type,
-        summary, possible_pattern, confidence_level, planning_relevance
+        summary, possible_pattern, confidence_level, pattern_stability, planning_relevance
     ))
 
     conn.commit()
@@ -1522,7 +1529,7 @@ def get_ai_reflection_summaries_for_student(student_id, subject=None, task_type=
 
     query = """
         SELECT task_name, subject, task_type, summary, possible_pattern,
-               confidence_level, planning_relevance, updated_at
+               confidence_level, pattern_stability, planning_relevance, updated_at
         FROM ai_reflection_summaries
         WHERE student_id = %s
     """
