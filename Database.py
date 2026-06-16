@@ -1501,10 +1501,10 @@ def save_ai_reflection_summary(
     cursor.execute("""
         INSERT INTO ai_reflection_summaries (
             student_id, task_id, task_name, subject, task_type,
-            summary, possible_pattern, confidence_level,pattern_stability, planning_relevance,
+            summary, possible_pattern, confidence_level, pattern_stability, planning_relevance,
             created_at, updated_at
         )
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),NOW())
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),NOW())
         ON CONFLICT (student_id, task_id)
         DO UPDATE SET
             summary = EXCLUDED.summary,

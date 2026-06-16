@@ -4,7 +4,6 @@ from datetime import date, datetime, timedelta
 from streamlit_calendar import calendar
 
 from Database import (
-    init_db,
     get_student,
     create_student,
     get_tasks_for_student,
@@ -65,9 +64,6 @@ from LLM_helper import (
 
 
 st.set_page_config(page_title="Personalized Study Planner", layout="wide")
-
-# Tijdelijk één keer uitvoeren om nieuwe tabellen/kolommen aan te maken
-init_db()
 
 # Database bestaat al, dus niet steeds opnieuw initialiseren
 # init_db()
