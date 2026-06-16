@@ -46,6 +46,8 @@ from Database import (
     update_task,
     update_activity_slot,
     mark_onboarding_seen,
+    save_ai_reflection_summary,
+    get_ai_reflection_summaries_for_student,
 
 )
 
@@ -56,7 +58,8 @@ from LLM_helper import (
     chat_with_system_guide,
     check_reflection_completion,
     generate_learning_preference_proposal,
-    generate_feedback_reflection
+    generate_feedback_reflection,
+    generate_reflection_summary,
 )
 
 st.set_page_config(page_title="Personalized Study Planner", layout="wide")
@@ -2629,11 +2632,18 @@ def render_feedback_page(student_id: str):
     if "pending_ai_preference_proposal" not in st.session_state:
         st.session_state.pending_ai_preference_proposal = None
 
-    def build_current_reflection_context():
+    def build_current_reflection_context(subject=None, task_type=None):
         current_history_rows = get_task_learning_rows(student_id)
         current_learning_profile_rows = get_learning_profile_for_student(student_id)
         current_tasks_for_context = get_tasks_for_student(student_id)
         current_ai_preferences = get_ai_learning_preferences_for_student(student_id)
+
+        current_reflection_summaries = get_ai_reflection_summaries_for_student(
+            student_id=student_id,
+            subject=subject,
+            task_type=task_type,
+            limit=5
+        )
 
         return build_student_context(
             student_name=st.session_state.student_name,
@@ -2649,7 +2659,8 @@ def render_feedback_page(student_id: str):
             history_rows=current_history_rows,
             tasks=current_tasks_for_context,
             learning_profile_rows=current_learning_profile_rows,
-            ai_learning_preferences=current_ai_preferences
+            ai_learning_preferences=current_ai_preferences,
+            reflection_summary_rows=current_reflection_summaries
         )
 
     def create_pending_proposal(
@@ -2814,6 +2825,35 @@ def render_feedback_page(student_id: str):
 
         displayed_rows = get_ai_feedback_reflections(student_id, active_reflection_task_id)
 
+        def save_current_reflection_summary(context_text):
+            rows = get_ai_feedback_reflections(student_id, active_reflection_task_id)
+
+            chat_history = [
+                {"role": row[0], "content": row[1]}
+                for row in rows
+            ]
+
+            summary_result = generate_reflection_summary(
+                student_name=st.session_state.student_name,
+                task_name=loaded_task_name,
+                subject=loaded_subject,
+                task_type=loaded_task_type,
+                student_context=context_text,
+                chat_history=chat_history
+            )
+
+            save_ai_reflection_summary(
+                student_id=student_id,
+                task_id=active_reflection_task_id,
+                task_name=loaded_task_name,
+                subject=loaded_subject,
+                task_type=loaded_task_type,
+                summary=summary_result.get("summary"),
+                possible_pattern=summary_result.get("possible_pattern"),
+                confidence_level=summary_result.get("confidence_level"),
+                planning_relevance=summary_result.get("planning_relevance")
+            )
+
         for message_role, message_content, message_created_at in displayed_rows:
             with st.chat_message(message_role):
                 st.write(message_content)
@@ -2838,7 +2878,10 @@ def render_feedback_page(student_id: str):
                 for row in updated_rows
             ]
 
-            reply_context_text = build_current_reflection_context()
+            reply_context_text = build_current_reflection_context(
+                subject=loaded_subject,
+                task_type=loaded_task_type
+            )
 
             latest_feedback_rows = [
                 row for row in get_history_for_student(student_id)
@@ -3020,6 +3063,13 @@ def render_feedback_page(student_id: str):
                             status="accepted"
                         )
 
+                        finish_context_text = build_current_reflection_context(
+                            subject=loaded_subject,
+                            task_type=loaded_task_type
+                        )
+
+                        save_current_reflection_summary(finish_context_text)
+
                         st.session_state.pending_ai_preference_proposal = None
                         st.session_state.feedback_reflection_task_id = None
                         st.success("Suggestion saved for future similar tasks.")
@@ -3027,6 +3077,12 @@ def render_feedback_page(student_id: str):
 
                 with col_reject:
                     if st.button("Reject suggestion", key=f"reject_ai_preference_{active_reflection_task_id}"):
+                        finish_context_text = build_current_reflection_context(
+                            subject=loaded_subject,
+                            task_type=loaded_task_type
+                        )
+                        save_current_reflection_summary(finish_context_text)
+
                         st.session_state.pending_ai_preference_proposal = None
                         st.session_state.feedback_reflection_task_id = None
                         st.info("Suggestion ignored.")
@@ -3040,6 +3096,12 @@ def render_feedback_page(student_id: str):
                 )
 
                 if st.button("Continue", key=f"continue_no_ai_preference_{active_reflection_task_id}"):
+                    finish_context_text = build_current_reflection_context(
+                        subject=loaded_subject,
+                        task_type=loaded_task_type
+                    )
+                    save_current_reflection_summary(finish_context_text)
+
                     st.session_state.pending_ai_preference_proposal = None
                     st.session_state.feedback_reflection_task_id = None
                     st.rerun()
@@ -3064,7 +3126,12 @@ def render_feedback_page(student_id: str):
 
                 if st.button("Finish reflection", key=f"finish_reflection_{active_reflection_task_id}"):
 
-                    finish_context_text = build_current_reflection_context()
+                    finish_context_text = build_current_reflection_context(
+                        subject=loaded_subject,
+                        task_type=loaded_task_type
+                    )
+
+                    save_current_reflection_summary(finish_context_text)
 
                     create_pending_proposal(
                         proposal_task_id=active_reflection_task_id,

@@ -497,8 +497,22 @@ def _format_ai_learning_preferences(preference_rows: list) -> str:
 
     return "\n".join(lines)
 
+def _format_reflection_summaries(summary_rows: list) -> str:
+    if not summary_rows:
+        return "No previous reflection summaries available."
 
-def build_student_context(student_name: str, plan_result: dict, history_rows: list, tasks: list, learning_profile_rows: list,  ai_learning_preferences: list | None = None) -> str:
+    lines = []
+    for row in summary_rows:
+        task_name, subject, task_type, summary, possible_pattern, confidence_level, planning_relevance, updated_at = row
+        lines.append(
+            f"- {task_name} | subject: {subject} | type: {task_type} | "
+            f"summary: {summary} | possible pattern: {possible_pattern} | "
+            f"confidence: {confidence_level} | planning relevance: {planning_relevance}"
+        )
+
+    return "\n".join(lines)
+
+def build_student_context(student_name: str, plan_result: dict, history_rows: list, tasks: list, learning_profile_rows: list, ai_learning_preferences: list | None = None, reflection_summary_rows: list | None = None) -> str:
     daily_plan_text = _format_daily_plan(plan_result.get("daily_plan", {}))
     unscheduled_tasks_text = _format_unscheduled_tasks(plan_result.get("unscheduled_tasks", []))
     learning_patterns_text = summarize_learning_patterns(history_rows)
@@ -506,6 +520,7 @@ def build_student_context(student_name: str, plan_result: dict, history_rows: li
     recent_feedback_text = _format_recent_feedback_examples(history_rows)
     task_feasibility_text = _format_task_feasibility(tasks, plan_result.get("daily_plan", {}))
     ai_preferences_text = _format_ai_learning_preferences(ai_learning_preferences or [])
+    reflection_summaries_text = _format_reflection_summaries(reflection_summary_rows or [])
 
     total_required_hours = plan_result.get("total_required_hours", 0.0)
     total_available_hours = plan_result.get("total_available_hours", 0.0)
@@ -553,6 +568,9 @@ Personal learning factors currently available:
 
 Accepted AI learning preferences:
 {ai_preferences_text}
+
+Previous reflection summaries:
+{reflection_summaries_text}
 
 Recent feedback examples:
 {recent_feedback_text}
@@ -1245,6 +1263,71 @@ If the assistant already recommended a concrete planning adjustment, do not retu
             "reason": "Could not parse proposal."
         }
 
+def generate_reflection_summary(
+    student_name: str,
+    task_name: str,
+    subject: str,
+    task_type: str,
+    student_context: str,
+    chat_history: list
+) -> dict:
+    client = get_client()
+
+    conversation_text = _build_conversation_text(
+        chat_history,
+        "No reflection conversation available."
+    )
+
+    prompt = f"""
+You summarize a completed AI reflection conversation for future planning personalization.
+
+Return ONLY valid raw JSON.
+Do not use markdown.
+Do not wrap the JSON in triple backticks.
+
+Schema:
+{{
+  "summary": <short summary>,
+  "possible_pattern": <possible recurring pattern or null>,
+  "confidence_level": <"tentative" | "moderate" | "strong">,
+  "planning_relevance": <short explanation of how this may matter for future planning>
+}}
+
+Rules:
+- Do not overgeneralize from one task.
+- If this seems task-specific, say so.
+- Focus on planning-relevant causes such as hidden work, underestimation, fatigue, focus, difficulty, prior knowledge, motivation, or preferred study conditions.
+- Do not mention theory names.
+
+Student: {student_name}
+Task: {task_name}
+Subject: {subject}
+Task type: {task_type}
+
+Student context:
+{student_context}
+
+Reflection conversation:
+{conversation_text}
+"""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+
+    raw_text = response.text.strip()
+    cleaned_text = raw_text.replace("```json", "").replace("```", "").strip()
+
+    try:
+        return json.loads(cleaned_text)
+    except json.JSONDecodeError:
+        return {
+            "summary": "Could not summarize reflection conversation.",
+            "possible_pattern": None,
+            "confidence_level": "tentative",
+            "planning_relevance": "No reliable planning relevance could be extracted."
+        }
 
 def chat_with_system_guide(student_name: str, chat_history: list, user_message: str) -> str:
     client = get_client()

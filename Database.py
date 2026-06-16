@@ -254,6 +254,26 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ai_reflection_summaries (
+            summary_id SERIAL PRIMARY KEY,
+            student_id TEXT NOT NULL,
+            task_id INTEGER NOT NULL,
+            subject TEXT NOT NULL,
+            task_type TEXT NOT NULL,
+            task_name TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            possible_pattern TEXT,
+            confidence_level TEXT,
+            planning_relevance TEXT,
+            created_at TIMESTAMP NOT NULL,
+            updated_at TIMESTAMP NOT NULL,
+            UNIQUE(student_id, task_id),
+            FOREIGN KEY (student_id) REFERENCES students(student_id),
+            FOREIGN KEY (task_id) REFERENCES tasks(task_id)
+        )
+    """)
+
     # -----------------------------
     # AI accepted learning preferences
     # -----------------------------
@@ -625,6 +645,11 @@ def delete_student_account(student_id: str):
 
     cursor.execute("""
         DELETE FROM planner_personalization_log
+        WHERE student_id = %s
+    """, (student_id,))
+
+    cursor.execute("""
+        DELETE FROM ai_reflection_summaries
         WHERE student_id = %s
     """, (student_id,))
 
@@ -1440,7 +1465,6 @@ def save_ai_feedback_reflection(student_id: str, task_id: int, role: str, conten
     cursor.close()
     conn.close()
 
-
 def get_ai_feedback_reflections(student_id: str, task_id: int):
     conn = get_connection()
     cursor = conn.cursor()
@@ -1461,6 +1485,65 @@ def get_ai_feedback_reflections(student_id: str, task_id: int):
     conn.close()
     return rows
 
+def save_ai_reflection_summary(
+    student_id, task_id, task_name, subject, task_type,
+    summary, possible_pattern, confidence_level, planning_relevance
+):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO ai_reflection_summaries (
+            student_id, task_id, task_name, subject, task_type,
+            summary, possible_pattern, confidence_level, planning_relevance,
+            created_at, updated_at
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),NOW())
+        ON CONFLICT (student_id, task_id)
+        DO UPDATE SET
+            summary = EXCLUDED.summary,
+            possible_pattern = EXCLUDED.possible_pattern,
+            confidence_level = EXCLUDED.confidence_level,
+            planning_relevance = EXCLUDED.planning_relevance,
+            updated_at = NOW()
+    """, (
+        student_id, task_id, task_name, subject, task_type,
+        summary, possible_pattern, confidence_level, planning_relevance
+    ))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def get_ai_reflection_summaries_for_student(student_id, subject=None, task_type=None, limit=5):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+        SELECT task_name, subject, task_type, summary, possible_pattern,
+               confidence_level, planning_relevance, updated_at
+        FROM ai_reflection_summaries
+        WHERE student_id = %s
+    """
+    params = [student_id]
+
+    if subject:
+        query += " AND subject = %s"
+        params.append(subject)
+
+    if task_type:
+        query += " AND task_type = %s"
+        params.append(task_type)
+
+    query += " ORDER BY updated_at DESC LIMIT %s"
+    params.append(limit)
+
+    cursor.execute(query, tuple(params))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return rows
 
 # -----------------------------
 # Day preferences (sleep / wake)
