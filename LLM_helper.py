@@ -1063,6 +1063,23 @@ Similar tasks means:
 Do NOT propose a preference if the explanation is too vague or based on only unclear information.
 Adaptive recommendations must be conservative.
 
+Most reflection conversations should NOT result in a new persistent planning preference.
+
+Only create a proposal when there is sufficient evidence of a recurring pattern across similar tasks.
+Do not avoid proposals entirely. When repeated historical feedback, previous reflection summaries, or existing accepted preferences clearly indicate a stable pattern, generate a concrete proposal.
+Similar tasks means the same student, same subject, and same task type.
+
+Return has_proposal = false when:
+- this is the first observation for this student, subject, and task type,
+- there is no existing accepted preference and no repeated historical pattern,
+- the explanation is mainly task-specific, temporary, prior knowledge, familiarity, or being good at the material,
+- the outcome does not indicate a recurring planning issue or recurring planning opportunity,
+- the proposed change would merely reflect a one-time outcome,
+- the only reasonable conclusion is to continue with the current planning approach.
+
+Positive outcomes alone are not sufficient evidence for changing future planning preferences.
+Recurring strengths may justify adaptive changes, but only when supported by repeated historical feedback, previous reflection summaries, or existing accepted preferences.
+
 Do not propose planning adjustments based on a single task unless the evidence is very strong.
 First-time observation rule:
 - If this is the first feedback observation for this student, subject, and task type, prefer has_proposal = false.
@@ -1117,12 +1134,13 @@ Buffer visibility rule:
 Only include planner adjustments if they logically follow from the reflection conversation.
 If the student completed the task faster because it was familiar, do not add extra buffer.
 
-If a task was completed faster than expected with very low difficulty and low mental effort:
-- First consider whether prior knowledge, familiarity, review effects, or task-specific circumstances could explain the result.
-- Do not reduce future estimates based on a single efficient task.
-- Do not infer a lower preferred energy level from a single efficient task.
-- Require repeated evidence before recommending shorter durations or lower-energy scheduling.
-- If there is only one efficient task and no repeated historical pattern, set has_proposal to false.
+If a task was completed faster than expected:
+- Do not create a proposal based on a single fast completion.
+- If the explanation is prior knowledge, familiarity, or being good at the material, treat this as task-specific unless repeated evidence supports it.
+- Do not reduce future estimates, remove buffers, or change energy preferences based on a first-time observation.
+- Only recommend changes to time buffers, preferred energy levels, or session length when repeated historical feedback, previous reflection summaries, or existing accepted preferences consistently indicate that the same pattern occurs across similar tasks.
+- Do not infer lower-energy preferences merely because a task was completed faster than expected.
+- Preferred energy recommendations should be based on recurring performance under different energy conditions rather than on a single outcome.
 
 Preferred energy decision rule:
 - preferred_energy refers to the student's preferred energy state or time-of-day suitability for similar tasks.
@@ -1178,29 +1196,11 @@ If the student needed more time because similar tasks are unpredictable, cogniti
 If the conversation only supports shorter sessions, set max_session_hours but keep add_time_buffer_percent at 0.
 If the conversation only supports more time, set add_time_buffer_percent but do not force shorter sessions.
 Consistency with the reflection conversation:
-- The proposal should remain consistent with recommendations already communicated by the assistant during the reflection conversation.
-- If the assistant has already clearly recommended a planning adjustment, treat this as sufficient evidence for a proposal.
-- Do not return has_proposal = false if the assistant has already recommended a concrete change.
+- The proposal should remain consistent with the reflection conversation, but the final decision must still be conservative.
+- If the assistant previously suggested a change but the full conversation indicates a task-specific, temporary, or positive explanation, return has_proposal = false.
+- Do not create a proposal only because the assistant mentioned that future planning could adapt.
+- The final JSON should be based on the total evidence in the current feedback, historical patterns, previous reflection summaries, and learning profile.
 - Ensure that the returned proposal matches the reasoning and recommendations previously given in the reflection conversation.
-
-Examples:
-If the assistant previously stated:
-"We would recommend adding a small time buffer."
-or
-"Future similar tasks may benefit from more time."
-
-Then return:
-
-{{
-  "has_proposal": true,
-  "change_time_buffer": true
-}}
-
-rather than:
-
-{{
-  "has_proposal": false
-}}
 
 The proposal_text should describe what the system should remember for future similar tasks.
 
@@ -1230,7 +1230,18 @@ Reflection conversation:
 
 Pay close attention to recommendations already made by the assistant in the reflection conversation.
 The final JSON should remain consistent with those recommendations.
-If the assistant already recommended a concrete planning adjustment, do not return has_proposal = false.
+Pay close attention to recommendations already made by the assistant in the reflection conversation.
+
+The final JSON should remain broadly consistent with the reflection conversation, but consistency should never override conservative adaptation.
+
+A previous recommendation by the assistant is not sufficient evidence for a persistent planning preference.
+
+The final decision should be based on the complete evidence, including:
+- the current reflection conversation,
+- historical feedback patterns,
+- previous reflection summaries,
+- existing accepted preferences,
+- and whether the explanation appears stable or task-specific.
 """
 
     response = client.models.generate_content(
