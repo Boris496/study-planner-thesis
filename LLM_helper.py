@@ -513,7 +513,7 @@ def _format_reflection_summaries(summary_rows: list) -> str:
 
     return "\n".join(lines)
 
-def build_student_context(student_name: str, plan_result: dict, history_rows: list, tasks: list, learning_profile_rows: list, ai_learning_preferences: list | None = None, reflection_summary_rows: list | None = None) -> str:
+def build_student_context(plan_result: dict, history_rows: list, tasks: list, learning_profile_rows: list, ai_learning_preferences: list | None = None, reflection_summary_rows: list | None = None) -> str:
     daily_plan_text = _format_daily_plan(plan_result.get("daily_plan", {}))
     unscheduled_tasks_text = _format_unscheduled_tasks(plan_result.get("unscheduled_tasks", []))
     learning_patterns_text = summarize_learning_patterns(history_rows)
@@ -540,8 +540,6 @@ def build_student_context(student_name: str, plan_result: dict, history_rows: li
         pass
 
     context = f"""
-Student name: {student_name}
-
 Planning period:
 - Start: {planning_start}
 - End: {planning_end}
@@ -623,7 +621,6 @@ def _build_conversation_text(chat_history: list, empty_text: str) -> str:
 
 
 def chat_with_study_coach(
-    student_name: str,
     student_context: str,
     chat_history: list,
     user_message: str
@@ -750,9 +747,6 @@ Reasoning behavior:
 - If the student asks about a specific day, use the exact date shown in the study plan.
 - If the plan is realistic overall, clearly say so and keep the tone reassuring.
 
-Student:
-{student_name}
-
 Student context:
 {student_context}
 
@@ -772,7 +766,6 @@ Latest student message:
 
 
 def generate_feedback_reflection(
-    student_name: str,
     task_name: str,
     subject: str,
     task_type: str,
@@ -920,7 +913,6 @@ Known planning information rule:
     - Would future similar tasks benefit from more time, shorter sessions, higher-energy slots, or more spacing?
 
     Current feedback:
-    - Student: {student_name}
     - Task: {task_name}
     - Subject: {subject}
     - Task type: {task_type}
@@ -951,7 +943,6 @@ Known planning information rule:
     return response.text
 
 def check_reflection_completion(
-    student_name: str,
     task_name: str,
     subject: str,
     task_type: str,
@@ -995,9 +986,6 @@ Set enough_information to false if:
 - important context is missing,
 - or the AI should ask one more focused follow-up question.
 
-Student:
-{student_name}
-
 Task:
 - {task_name}
 - Subject: {subject}
@@ -1035,7 +1023,6 @@ Reflection conversation:
         }
 
 def generate_learning_preference_proposal(
-    student_name: str,
     task_name: str,
     subject: str,
     task_type: str,
@@ -1219,9 +1206,6 @@ Bad examples:
 - "Always plan 1 hour."
 - "Ask whether the topic is familiar."
 
-Student:
-{student_name}
-
 Current task:
 - Task: {task_name}
 - Subject: {subject}
@@ -1280,7 +1264,6 @@ The final decision should be based on the complete evidence, including:
         }
 
 def generate_reflection_summary(
-    student_name: str,
     task_name: str,
     subject: str,
     task_type: str,
@@ -1320,7 +1303,6 @@ Rules:
 - Use recurring only when the same explanation has occurred multiple times for the same student, subject, and task type.
 - Task-specific causes such as unfamiliar material, one difficult chapter, one easy task, or temporary circumstances should be classified as task_specific unless repeated evidence exists.
 
-Student: {student_name}
 Task: {task_name}
 Subject: {subject}
 Task type: {task_type}
@@ -1351,7 +1333,7 @@ Reflection conversation:
             "planning_relevance": "No reliable planning relevance could be extracted."
         }
 
-def chat_with_system_guide(student_name: str, chat_history: list, user_message: str) -> str:
+def chat_with_system_guide(chat_history: list, user_message: str) -> str:
     client = get_client()
 
     system_context = """
@@ -1437,8 +1419,6 @@ Your job:
     prompt = f"""
 {system_context}
 
-Student name: {student_name}
-
 Conversation so far:
 {conversation_text}
 
@@ -1482,7 +1462,7 @@ def _build_learning_profile_lookup(learning_profile_rows: list) -> dict:
     return lookup
 
 
-def get_planner_advice(student_name: str, student_context: str, tasks: list, learning_profile_rows: list) -> dict:
+def get_planner_advice(student_context: str, tasks: list, learning_profile_rows: list) -> dict:
     client = get_client()
     learning_profile_lookup = _build_learning_profile_lookup(learning_profile_rows)
 
@@ -1600,9 +1580,6 @@ Guidance:
   avoid_after_high_difficulty_task = false.
 - Keep the reason short and grounded in the provided data.
 - Do not invent data.
-
-Student name:
-{student_name}
 
 Student context:
 {student_context}

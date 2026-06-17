@@ -62,7 +62,6 @@ from LLM_helper import (
     generate_reflection_summary,
 )
 
-
 st.set_page_config(page_title="Personalized Study Planner", layout="wide")
 
 # Database bestaat al, dus niet steeds opnieuw initialiseren
@@ -277,25 +276,11 @@ def render_task_card(task_id, name, subject, task_type, importance, intensity, d
     )
 
 
-def render_history_card(
-    task_name,
-    task_type,
-    subject,
-    importance,
-    estimated,
-    adjusted,
-    actual,
-    completed,
-    remaining,
-    logged_at
-):
+def render_history_card(task_name, task_type, subject, importance, estimated, adjusted, actual, completed, remaining,
+                        logged_at):
     completed_text = "Yes" if completed else "No"
     badge_html = importance_badge(importance)
-    status_html = (
-        '<span class="badge badge-completed">Completed</span>'
-        if completed
-        else '<span class="badge badge-incomplete">Open / Partial</span>'
-    )
+    status_html = '<span class="badge badge-completed">Completed</span>' if completed else '<span class="badge badge-incomplete">Open / Partial</span>'
 
     st.markdown(
         f"""
@@ -312,6 +297,7 @@ def render_history_card(
             <div><b>Actual worked:</b> {actual} h</div>
             <div><b>Completed:</b> {completed_text}</div>
             <div><b>Remaining:</b> {remaining} h</div>
+            <div class="small-muted" style="margin-top:8px;">Logged at: {logged_at}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -649,7 +635,7 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
             font-weight: 600 !important;
         }
 
-        
+
         .fc-daygrid-event {
             white-space: normal !important;
             padding: 4px 6px !important;
@@ -882,6 +868,7 @@ def group_history_by_task(history):
     result.sort(key=lambda x: x["latest_logged_at"], reverse=True)
     return result
 
+
 def get_feedback_reminder_tasks(student_id: str):
     saved_plan = get_saved_study_plan(student_id)
     tasks = get_tasks_for_student(student_id)
@@ -973,7 +960,8 @@ def get_feedback_reminder_tasks(student_id: str):
 
     return reminders
 
-def render_ai_help_section(student_name: str):
+
+def render_ai_help_section():
     st.markdown("---")
     st.subheader("AI Help Assistant")
     st.caption("Ask questions about how the app works, where to find features, or what certain terms mean.")
@@ -993,7 +981,6 @@ def render_ai_help_section(student_name: str):
         if st.button("Start AI Help"):
             with st.spinner("Opening AI help assistant..."):
                 welcome_reply = chat_with_system_guide(
-                    student_name=student_name,
                     chat_history=[],
                     user_message="Give me a short overview of what I can do in this app."
                 )
@@ -1026,7 +1013,6 @@ def render_ai_help_section(student_name: str):
 
         with st.spinner("Thinking..."):
             help_reply = chat_with_system_guide(
-                student_name=student_name,
                 chat_history=recent_help_history,
                 user_message=help_question
             )
@@ -1045,7 +1031,6 @@ def render_ai_help_section(student_name: str):
 
 @st.dialog("Welcome to the Personalized Study Planner")
 def render_onboarding_dialog(student_id: str, student_name: str):
-
     st.markdown(f"""
 Welcome **{student_name}**!
 
@@ -1085,6 +1070,7 @@ Enjoy planning!
     if st.button("Start using the planner"):
         mark_onboarding_seen(student_id)
         st.rerun()
+
 
 def render_student_dashboard_home(student_id: str, student_name: str):
     st.title("Personalized Workload-Aware Study Planner")
@@ -1234,7 +1220,7 @@ def render_student_dashboard_home(student_id: str, student_name: str):
         else:
             st.info("No feedback logged yet.")
 
-    render_ai_help_section(student_name)
+    render_ai_help_section()
 
 
 def render_planning_setup_page(student_id: str):
@@ -2239,6 +2225,7 @@ def render_planning_setup_page(student_id: str):
             else:
                 st.info("Click 'Build Study Plan' to generate a new plan.")
 
+
 def render_plan_summary_cards(plan_result: dict):
     daily_plan = plan_result.get("daily_plan", {})
     unscheduled_tasks = plan_result.get("unscheduled_tasks", [])
@@ -2300,6 +2287,7 @@ def render_plan_summary_cards(plan_result: dict):
     col6.metric("This week", f"{round(planned_hours, 2)} h", f"↑ {planned_blocks} blocks")
     col7.metric("Planned blocks", planned_blocks)
     col8.metric("Planned hours", round(planned_hours, 2))
+
 
 def render_saved_plan_page(student_id: str):
     st.title("Saved Study Plan")
@@ -2537,7 +2525,6 @@ def render_saved_plan_page(student_id: str):
     ai_learning_preferences = get_ai_learning_preferences_for_student(student_id)
 
     student_context = build_student_context(
-        student_name=st.session_state.student_name,
         plan_result=plan_for_ai,
         history_rows=history_rows,
         tasks=tasks,
@@ -2557,7 +2544,6 @@ def render_saved_plan_page(student_id: str):
             )
 
             reply = chat_with_study_coach(
-                student_name=st.session_state.student_name,
                 student_context=student_context,
                 chat_history=[],
                 user_message=first_prompt
@@ -2580,7 +2566,6 @@ def render_saved_plan_page(student_id: str):
                 )
 
                 reply = chat_with_study_coach(
-                    student_name=st.session_state.student_name,
                     student_context=student_context,
                     chat_history=[],
                     user_message=first_prompt
@@ -2620,7 +2605,6 @@ def render_saved_plan_page(student_id: str):
 
         with st.spinner("Thinking..."):
             reply = chat_with_study_coach(
-                student_name=st.session_state.student_name,
                 student_context=student_context,
                 chat_history=recent_history,
                 user_message=user_message
@@ -2631,6 +2615,7 @@ def render_saved_plan_page(student_id: str):
         })
 
         st.rerun()
+
 
 def render_feedback_page(student_id: str):
     st.title("Task Feedback")
@@ -2661,7 +2646,6 @@ def render_feedback_page(student_id: str):
         )
 
         return build_student_context(
-            student_name=st.session_state.student_name,
             plan_result=st.session_state.generated_plan if st.session_state.generated_plan else {
                 "daily_plan": {},
                 "unscheduled_tasks": [],
@@ -2679,11 +2663,11 @@ def render_feedback_page(student_id: str):
         )
 
     def create_pending_proposal(
-        proposal_task_id,
-        proposal_task_name,
-        proposal_subject,
-        proposal_task_type,
-        proposal_context_text
+            proposal_task_id,
+            proposal_task_name,
+            proposal_subject,
+            proposal_task_type,
+            proposal_context_text
     ):
         proposal_rows = get_ai_feedback_reflections(student_id, proposal_task_id)
 
@@ -2703,7 +2687,6 @@ def render_feedback_page(student_id: str):
             return
 
         completion_check = check_reflection_completion(
-            student_name=st.session_state.student_name,
             task_name=proposal_task_name,
             subject=proposal_subject,
             task_type=proposal_task_type,
@@ -2757,7 +2740,6 @@ def render_feedback_page(student_id: str):
             proposal_actual_hours = float(latest_feedback[8])
 
         proposal = generate_learning_preference_proposal(
-            student_name=st.session_state.student_name,
             task_name=proposal_task_name,
             subject=proposal_subject,
             task_type=proposal_task_type,
@@ -2767,7 +2749,6 @@ def render_feedback_page(student_id: str):
             adjusted_hours=proposal_adjusted_hours,
             actual_hours=proposal_actual_hours
         )
-
 
         if not isinstance(proposal, dict):
             proposal = {
@@ -2849,7 +2830,6 @@ def render_feedback_page(student_id: str):
             ]
 
             summary_result = generate_reflection_summary(
-                student_name=st.session_state.student_name,
                 task_name=loaded_task_name,
                 subject=loaded_subject,
                 task_type=loaded_task_type,
@@ -2908,7 +2888,6 @@ def render_feedback_page(student_id: str):
             latest_feedback = latest_feedback_rows[0] if latest_feedback_rows else None
 
             ai_reply = generate_feedback_reflection(
-                student_name=st.session_state.student_name,
                 task_name=loaded_task_name,
                 subject=loaded_subject,
                 task_type=loaded_task_type,
@@ -3174,7 +3153,6 @@ def render_feedback_page(student_id: str):
 
                     st.rerun()
 
-
     active_reflection_id = st.session_state.get("feedback_reflection_task_id")
 
     if active_reflection_id:
@@ -3426,7 +3404,6 @@ def render_feedback_page(student_id: str):
             ]
 
             ai_reflection = generate_feedback_reflection(
-                student_name=st.session_state.student_name,
                 task_name=feedback_task_name,
                 subject=feedback_subject,
                 task_type=feedback_task_type,
@@ -3697,6 +3674,7 @@ def render_history_page(student_id: str):
         else:
             st.info("No feedback logs match the selected filters.")
 
+
 def render_help_page():
     st.title("How to use this app")
 
@@ -3879,7 +3857,6 @@ def render_help_page():
             st.markdown(help_user_message)
 
         help_response = chat_with_system_guide(
-            student_name=st.session_state.student_name,
             chat_history=st.session_state.help_chat_history,
             user_message=help_user_message
         )
@@ -3891,6 +3868,7 @@ def render_help_page():
 
         with st.chat_message("assistant"):
             st.markdown(help_response)
+
 
 # -----------------------------
 # Admin pages
@@ -3967,9 +3945,10 @@ def render_admin_dashboard():
     else:
         st.info("No student feedback data available yet.")
 
-#------------------------
+
+# ------------------------
 # Downloading CSV
-#------------------------
+# ------------------------
 
 def render_csv_download(df: pd.DataFrame, filename: str, label: str):
     if df.empty:
@@ -3982,6 +3961,7 @@ def render_csv_download(df: pd.DataFrame, filename: str, label: str):
         file_name=filename,
         mime="text/csv"
     )
+
 
 def render_admin_detailed_page():
     st.title("Detailed Estimation Analysis")
@@ -4146,6 +4126,7 @@ def render_admin_account_management():
                     st.success("Student account permanently deleted.")
                     st.rerun()
 
+
 def render_admin_task_type_analysis():
     st.title("Task Type Analysis")
 
@@ -4182,6 +4163,7 @@ def render_admin_task_type_analysis():
 
         st.markdown("### Average workload per task type")
         st.bar_chart(chart_df)
+
 
 def render_admin_subject_analysis():
     st.title("Subject Analysis")
@@ -4234,6 +4216,7 @@ def render_admin_subject_analysis():
         st.markdown("### Average cognitive profile per subject")
         st.bar_chart(cognitive_df)
 
+
 def render_admin_learning_profiles():
     st.title("Learning Profiles")
 
@@ -4266,7 +4249,8 @@ def render_admin_learning_profiles():
 
     with col2:
         task_type_options = ["All"] + sorted(df["task_type"].dropna().unique().tolist())
-        selected_task_type = st.selectbox("Filter by task type", task_type_options, key="learning_profiles_task_type_filter")
+        selected_task_type = st.selectbox("Filter by task type", task_type_options,
+                                          key="learning_profiles_task_type_filter")
 
     with col3:
         subject_options = ["All"] + sorted(df["subject"].dropna().unique().tolist())
@@ -4307,6 +4291,7 @@ def render_admin_learning_profiles():
 
         st.markdown("### Average profile signals by task type")
         st.bar_chart(grouped_df)
+
 
 # -----------------------------
 # Sidebar + routing
