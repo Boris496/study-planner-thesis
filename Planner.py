@@ -771,9 +771,13 @@ def build_study_plan(student_id: str):
                     2
                 )
 
+            effective_session_limit = float(
+                selected_task.get("max_session_hours") or MAX_STUDY_BLOCK_HOURS
+            )
+
             if (
-                continuous_study_time >= MAX_STUDY_BLOCK_HOURS
-                and slot_remaining >= BREAK_DURATION_HOURS
+                    continuous_study_time >= effective_session_limit
+                    and slot_remaining >= BREAK_DURATION_HOURS
             ):
                 break_start_dt = datetime.strptime(
                     current_end_time_per_day[day_str],
