@@ -546,7 +546,6 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
 
     calendar_options = {
         "initialDate": first_plan_date,
-
         "initialView": "timeGridWeek",
 
         "headerToolbar": {
@@ -555,7 +554,8 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
             "right": "dayGridMonth,timeGridWeek,listWeek"
         },
 
-        "height": 900,
+        "height": 1200,
+        "contentHeight": 1100,
 
         "editable": False,
         "selectable": False,
@@ -607,7 +607,7 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
         }
 
         .fc-timegrid-slot {
-            height: 85px !important;
+            height: 50px !important;
         }
 
         .fc-timegrid-axis-cushion,
@@ -636,7 +636,6 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
             font-weight: 600 !important;
         }
 
-
         .fc-daygrid-event {
             white-space: normal !important;
             padding: 4px 6px !important;
@@ -655,6 +654,7 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
         if clicked and "event" in clicked:
             event_data = clicked["event"]
             props = event_data.get("extendedProps", {})
+
             st.markdown("---")
             st.subheader("Selected Study Block")
 
