@@ -535,161 +535,110 @@ def render_calendar_legend():
         unsafe_allow_html=True
     )
 
-def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calendar"):
-    if not daily_plan:
-        st.info("No study plan to display yet.")
-        return
+calendar_options = {
+    "initialDate": first_plan_date,
 
-    calendar_events = convert_plan_to_calendar_events(daily_plan)
-    first_plan_date = sorted(daily_plan.keys())[0]
+    "initialView": "timeGridWeek",
 
-    calendar_options = {
-        "initialDate": first_plan_date,
-        "initialView": "timeGridWeek",
+    "headerToolbar": {
+        "left": "prev,next today",
+        "center": "title",
+        "right": "dayGridMonth,timeGridWeek,listWeek"
+    },
 
-        "headerToolbar": {
-            "left": "prev,next today",
-            "center": "title",
-            "right": "dayGridMonth,timeGridWeek,listWeek"
-        },
+    "height": 900,
 
-        "height": 1200,
-        "contentHeight": 1100,
+    "editable": False,
+    "selectable": False,
+    "dayMaxEvents": True,
 
-        "editable": False,
-        "selectable": False,
-        "dayMaxEvents": True,
+    "slotMinTime": "06:00:00",
+    "slotMaxTime": "24:00:00",
+    "slotDuration": "00:15:00",
+    "expandRows": True,
+    "allDaySlot": True,
+    "nowIndicator": True,
 
-        "slotMinTime": "06:00:00",
-        "slotMaxTime": "24:00:00",
-        "slotDuration": "00:15:00",
-        "expandRows": True,
-        "allDaySlot": True,
-        "nowIndicator": True,
+    "eventTimeFormat": {
+        "hour": "2-digit",
+        "minute": "2-digit",
+        "hour12": False
+    },
 
-        "eventTimeFormat": {
-            "hour": "2-digit",
-            "minute": "2-digit",
-            "hour12": False
-        },
+    "slotLabelFormat": {
+        "hour": "2-digit",
+        "minute": "2-digit",
+        "hour12": False
+    },
+}
 
-        "slotLabelFormat": {
-            "hour": "2-digit",
-            "minute": "2-digit",
-            "hour12": False
-        },
+calendar_state = calendar(
+    events=calendar_events,
+    options=calendar_options,
+    custom_css="""
+    .fc {
+        font-size: 1rem;
     }
 
-    calendar_state = calendar(
-        events=calendar_events,
-        options=calendar_options,
-        custom_css="""
-        .fc {
-            font-size: 1rem;
-        }
+    .fc-toolbar-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+    }
 
-        .fc-toolbar-title {
-            font-size: 1.8rem;
-            font-weight: 800;
-        }
+    .fc-button {
+        font-size: 0.95rem !important;
+        padding: 0.55rem 0.9rem !important;
+        border-radius: 8px !important;
+    }
 
-        .fc-button {
-            font-size: 0.95rem !important;
-            padding: 0.55rem 0.9rem !important;
-            border-radius: 8px !important;
-        }
+    .fc-col-header-cell-cushion {
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 8px 4px;
+    }
 
-        .fc-col-header-cell-cushion {
-            font-size: 1rem;
-            font-weight: 700;
-            padding: 8px 4px;
-        }
+    .fc-timegrid-slot {
+        height: 85px !important;
+    }
 
-        .fc-timegrid-slot {
-            height: 50px !important;
-        }
+    .fc-timegrid-axis-cushion,
+    .fc-timegrid-slot-label-cushion {
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
 
-        .fc-timegrid-axis-cushion,
-        .fc-timegrid-slot-label-cushion {
-            font-size: 0.95rem;
-            font-weight: 600;
-        }
+    .fc-event {
+        border-radius: 10px !important;
+        padding: 4px 6px !important;
+        border: none !important;
+        margin: 0 !important;
+    }
 
-        .fc-event {
-            border-radius: 10px !important;
-            padding: 4px 6px !important;
-            border: none !important;
-            margin: 0 !important;
-        }
+    .fc-event-title {
+        font-weight: 700 !important;
+        font-size: 0.82rem !important;
+        line-height: 1.15 !important;
+        white-space: normal !important;
+        overflow: visible !important;
+    }
 
-        .fc-event-title {
-            font-weight: 700 !important;
-            font-size: 0.82rem !important;
-            line-height: 1.15 !important;
-            white-space: normal !important;
-            overflow: visible !important;
-        }
+    .fc-event-time {
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+    }
 
-        .fc-event-time {
-            font-size: 0.9rem !important;
-            font-weight: 600 !important;
-        }
+    .fc-daygrid-event {
+        white-space: normal !important;
+        padding: 4px 6px !important;
+    }
 
-        .fc-daygrid-event {
-            white-space: normal !important;
-            padding: 4px 6px !important;
-        }
-
-        .fc-list-event-title,
-        .fc-list-event-time {
-            font-size: 0.98rem;
-        }
-        """,
-        key=calendar_key
-    )
-
-    if calendar_state:
-        clicked = calendar_state.get("eventClick")
-        if clicked and "event" in clicked:
-            event_data = clicked["event"]
-            props = event_data.get("extendedProps", {})
-
-            st.markdown("---")
-            st.subheader("Selected Study Block")
-
-            if props.get("is_break"):
-                st.markdown(
-                    f"""
-                    <div class="soft-card">
-                        <div><b>Break:</b> Recovery moment</div>
-                        <div><b>Date:</b> {event_data.get('start', 'N/A')}</div>
-                        <div><b>Start time:</b> {props.get('start_time', 'N/A')}</div>
-                        <div><b>End time:</b> {props.get('end_time', 'N/A')}</div>
-                        <div><b>Duration:</b> {props.get('hours', 'N/A')} h</div>
-                        <div><b>Energy effect:</b> {props.get('energy_level', 'N/A')}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-            else:
-                st.markdown(
-                    f"""
-                    <div class="soft-card">
-                        <div><b>Task:</b> {event_data.get('title', 'N/A')}</div>
-                        <div><b>Date:</b> {event_data.get('start', 'N/A')}</div>
-                        <div><b>Start time:</b> {props.get('start_time', 'N/A')}</div>
-                        <div><b>End time:</b> {props.get('end_time', 'N/A')}</div>
-                        <div><b>Subject:</b> {props.get('subject', 'N/A')}</div>
-                        <div><b>Task type:</b> {props.get('task_type', 'N/A')}</div>
-                        <div><b>Importance:</b> {props.get('importance', 'N/A')}</div>
-                        <div><b>Intensity:</b> {props.get('intensity', 'N/A')}</div>
-                        <div><b>Energy level:</b> {props.get('energy_level', 'N/A')}</div>
-                        <div><b>Hours:</b> {props.get('hours', 'N/A')}</div>
-                        <div><b>Deadline:</b> {props.get('deadline', 'N/A')}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+    .fc-list-event-title,
+    .fc-list-event-time {
+        font-size: 0.98rem;
+    }
+    """,
+    key=calendar_key
+)
 
 
 def render_workload_chart(daily_plan: dict):
