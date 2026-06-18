@@ -4,6 +4,7 @@ import streamlit as st
 import json
 
 
+
 TASK_TYPE_TO_INTENSITY = {
     "Study / Learning": "High",
     "Reading": "Medium",
