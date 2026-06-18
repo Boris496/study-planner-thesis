@@ -646,19 +646,15 @@ def build_study_plan(student_id: str):
                 if task["task_type"] in COGNITIVE_TASK_TYPES:
                     used_cognitive = cognitive_hours_per_day.get(day_str, 0.0)
 
-                    # Soft cognitive limit:
-                    # If this day already reached the preferred cognitive limit,
-                    # only continue planning cognitive tasks on this day when the task
-                    # cannot still be planned on a later day before the deadline.
                     if used_cognitive >= PREFERRED_COGNITIVE_LIMIT_HOURS:
-                        later_slot_available = any(
-                            slot_date_obj < datetime.strptime(other_slot["study_date"],
-                                                              "%Y-%m-%d").date() <= latest_study_date
-                            and other_slot["remaining_hours"] >= MIN_BLOCK_HOURS
+                        later_available_hours = sum(
+                            float(other_slot["remaining_hours"])
                             for other_slot in free_slots
+                            if slot_date_obj < datetime.strptime(other_slot["study_date"],
+                                                                 "%Y-%m-%d").date() <= latest_study_date
                         )
 
-                        if later_slot_available:
+                        if later_available_hours >= float(task["adjusted_hours"]):
                             continue
 
                 selected_task = task
