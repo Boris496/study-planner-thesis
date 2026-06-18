@@ -535,7 +535,6 @@ def render_calendar_legend():
         unsafe_allow_html=True
     )
 
-
 def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calendar"):
     if not daily_plan:
         st.info("No study plan to display yet.")
@@ -554,8 +553,8 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
             "right": "dayGridMonth,timeGridWeek,listWeek"
         },
 
-        "height": 1000,
-        "contentHeight": 1000,
+        "height": 1200,
+        "contentHeight": 1100,
 
         "editable": False,
         "selectable": False,
@@ -607,7 +606,7 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
         }
 
         .fc-timegrid-slot {
-            height: 60px !important;
+            height: 50px !important;
         }
 
         .fc-timegrid-axis-cushion,
@@ -646,8 +645,7 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
             font-size: 0.98rem;
         }
         """,
-        key=calendar_key,
-        height=1100
+        key=calendar_key
     )
 
     if calendar_state:
@@ -655,6 +653,7 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
         if clicked and "event" in clicked:
             event_data = clicked["event"]
             props = event_data.get("extendedProps", {})
+
             st.markdown("---")
             st.subheader("Selected Study Block")
 
