@@ -889,10 +889,20 @@ B. Generate an adaptive planning proposal
 - The user interface will separately show Accept and Reject buttons for the student.
 
 C. Continue without adaptive changes
-- Use this when the current planning approach appears effective and no meaningful adaptation is needed.
+- Use this when the current evidence is insufficient for a persistent planning preference.
+- Use this when the current planning approach appears effective and no meaningful adaptation is needed yet.
 - Briefly explain why no change is recommended.
 - Mention which aspect of the current planning approach seems to work well.
+- If the current observation may become relevant when it repeats, explicitly say that similar future experiences could support a future planning proposal.
 - Do not ask another question.
+- Do not end with only "continue".
+
+When using outcome C:
+- If there is no issue, simply explain that no change is needed.
+- If there is a possible issue but not enough evidence yet, explain that no planning change is recommended for now.
+- In that case, mention that repeated similar experiences may justify a future proposal.
+- Refer to "future similar tasks" rather than hardcoding or repeating subject names.
+- Avoid implying that a persistent preference already exists.
 
 5. Always choose exactly ONE of these outcomes per response.
 6. Avoid vague endings such as only saying "continue".
