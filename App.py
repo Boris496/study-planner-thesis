@@ -3468,17 +3468,18 @@ def render_feedback_page(student_id: str):
     show_rebuild_option = st.session_state.get("show_rebuild_option", False)
 
     if show_rebuild_option and pending_rebuild_id == feedback_task_id:
-        confirm_key = f"confirm_rebuild_{feedback_task_id}"
-
-        if confirm_key not in st.session_state:
-            st.session_state[confirm_key] = False
-
+        st.info("Feedback has already been submitted for this task.")
         st.info("You can rebuild your study plan to schedule the remaining work.")
 
         st.warning(
             "Your current saved study plan will be replaced. "
             "Future study blocks may be rescheduled based on your progress."
         )
+
+        confirm_key = f"confirm_rebuild_{feedback_task_id}"
+
+        if confirm_key not in st.session_state:
+            st.session_state[confirm_key] = False
 
         if not st.session_state[confirm_key]:
             if st.button("Rebuild Study Plan now", key=f"rebuild_plan_btn_{feedback_task_id}"):
@@ -3514,6 +3515,8 @@ def render_feedback_page(student_id: str):
                     st.session_state.show_rebuild_option = False
                     st.session_state.pending_rebuild_task_id = None
                     st.rerun()
+
+        return
 
 
 def render_history_page(student_id: str):
@@ -3572,12 +3575,6 @@ def render_history_page(student_id: str):
 
         if filtered_history:
             for item in filtered_history:
-                note = ""
-                if item["feedback_count"] > 1:
-                    note = "This task required multiple study sessions."
-                elif item["total_actual_hours"] > item["estimated_hours"]:
-                    note = "This task took longer than originally estimated."
-
                 status_html = (
                     '<span class="badge badge-completed">Completed</span>'
                     if item["completed"]
