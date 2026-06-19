@@ -3393,13 +3393,20 @@ def render_feedback_page(student_id: str):
                     for row in existing_rows
                 ]
 
+                task_feedback_rows = [
+                    row for row in get_history_for_student(student_id)
+                    if row[1] == feedback_task_id
+                ]
+
+                total_actual_hours = sum(float(row[8]) for row in task_feedback_rows)
+
                 ai_reflection = generate_feedback_reflection(
                     task_name=feedback_task_name,
                     subject=feedback_subject,
                     task_type=feedback_task_type,
                     estimated_hours=float(feedback_estimated_hours),
                     adjusted_hours=float(feedback_adjusted_hours),
-                    actual_hours=float(actual_hours),
+                    actual_hours=float(total_actual_hours),
                     remaining_hours=0.0,
                     completed=True,
                     perceived_difficulty=perceived_difficulty,
