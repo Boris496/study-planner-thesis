@@ -3301,22 +3301,6 @@ def render_feedback_page(student_id: str):
                 key=f"remaining_hours_{feedback_task_id}"
             )
 
-            mental_effort = st.slider(
-                "How mentally demanding was this session? (1 = lowest, 5 = highest)",
-                min_value=1,
-                max_value=5,
-                value=3,
-                key=f"session_effort_{feedback_task_id}"
-            )
-
-            focus_level = st.slider(
-                "How well could you focus during this session? (1 = lowest, 5 = highest)",
-                min_value=1,
-                max_value=5,
-                value=3,
-                key=f"session_focus_{feedback_task_id}"
-            )
-
         else:
             remaining_hours = 0.0
 
