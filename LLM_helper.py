@@ -850,9 +850,11 @@ def generate_feedback_reflection(
     - The student is allowed to disagree with your interpretation.
     - If the student corrects your interpretation, adapt naturally.
     - Prefer short reflections over long analyses.
-    - When judging whether the time estimate was accurate, compare actual hours mainly with the planned / adjusted hours used by the planner.
-    - Use the original estimated hours only to understand how much the planner had already adjusted the task.
-    - If actual hours are close to planned / adjusted hours, do not say the task was underestimated, even if it is higher than the original estimate.
+    - When judging the student's original estimation accuracy, compare actual hours with the original estimated hours.
+    - When judging whether a time buffer was useful or still necessary, compare actual hours with the planned / adjusted hours used by the planner.
+    - Do not treat completion below the adjusted planned hours as faster than expected if actual hours are close to the original estimate.
+    - In that case, interpret the outcome as: the original estimate was accurate and the additional buffer was not needed in this specific instance.
+    - If actual hours are close to the adjusted planned hours, do not describe the task as underestimated, even when actual hours exceed the original estimate.
     - Never ask the student to confirm a planning adjustment in the chat.
     - When a planning adjustment is appropriate, describe it as a recommendation.
     - The UI handles acceptance or rejection separately.
@@ -1179,6 +1181,11 @@ Time buffer decision rule:
 - Original estimated hours: {estimated_hours}
 - Planned / adjusted hours used by the planner: {adjusted_hours}
 - Actual hours spent: {actual_hours}
+Estimation accuracy rule:
+- Judge the student's original estimation accuracy by comparing actual hours with the original estimated hours.
+- Judge whether an existing buffer was useful or still necessary by comparing actual hours with the planned / adjusted hours.
+- If actual hours are close to the original estimate but below the adjusted planned hours, interpret this as an accurate estimate with unused buffer rather than as faster-than-expected performance.
+- Successful completion within the original estimate is evidence that the student estimated the task accurately, even if additional buffer time had been reserved.
 Buffer strength rule:
 - Use 10% for mild or tentative evidence.
 - Use 20% for clear recurring underestimation or clearly repeated complexity.
@@ -1304,6 +1311,9 @@ Schema:
   "planning_relevance": <short explanation of how this may matter for future planning>
 }}
 
+Interpretation rule:
+- Distinguish between original estimation accuracy and the usefulness of additional time buffers.
+- Completing a task below the adjusted planned hours does not automatically imply faster-than-expected performance when actual hours remain close to the original estimate.
 Rules:
 - Do not overgeneralize from one task.
 - If this seems task-specific, say so.

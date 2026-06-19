@@ -277,30 +277,32 @@ def render_task_card(task_id, name, subject, task_type, importance, intensity, d
     )
 
 
-def render_history_card(task_name, task_type, subject, importance, estimated, adjusted, actual, completed, remaining,
-                        logged_at):
+def render_history_card(task_name, task_type, subject, importance, estimated, adjusted, actual, completed, remaining):
     completed_text = "Yes" if completed else "No"
     badge_html = importance_badge(importance)
-    status_html = '<span class="badge badge-completed">Completed</span>' if completed else '<span class="badge badge-incomplete">Open / Partial</span>'
+    status_html = (
+        '<span class="badge badge-completed">Completed</span>'
+        if completed
+        else '<span class="badge badge-incomplete">Open / Partial</span>'
+    )
 
     st.markdown(
         f"""
-        <div class="soft-card">
-            <h4 style="margin-bottom:8px;">{task_name}</h4>
-            <div style="margin-bottom:8px;">
-                {badge_html}
-                {status_html}
-            </div>
-            <div><b>Subject:</b> {subject}</div>
-            <div><b>Task type:</b> {task_type}</div>
-            <div><b>Estimated:</b> {estimated} h</div>
-            <div><b>Remaining / plannable at that moment:</b> {adjusted} h</div>
-            <div><b>Actual worked:</b> {actual} h</div>
-            <div><b>Completed:</b> {completed_text}</div>
-            <div><b>Remaining:</b> {remaining} h</div>
-            <div class="small-muted" style="margin-top:8px;">Logged at: {logged_at}</div>
-        </div>
-        """,
+          <div class="soft-card">
+              <h4 style="margin-bottom:8px;">{task_name}</h4>
+              <div style="margin-bottom:8px;">
+                  {badge_html}
+                  {status_html}
+              </div>
+              <div><b>Subject:</b> {subject}</div>
+              <div><b>Task type:</b> {task_type}</div>
+              <div><b>Estimated:</b> {estimated} h</div>
+              <div><b>Remaining / plannable at that moment:</b> {adjusted} h</div>
+              <div><b>Actual worked:</b> {actual} h</div>
+              <div><b>Completed:</b> {completed_text}</div>
+              <div><b>Remaining:</b> {remaining} h</div>
+          </div>
+          """,
         unsafe_allow_html=True
     )
 
@@ -1210,9 +1212,6 @@ def render_student_dashboard_home(student_id: str, student_name: str):
                             Total worked: {round(item['total_actual_hours'], 2)} h |
                             Remaining: {round(item['latest_remaining_hours'], 2)} h |
                             Updates: {item['feedback_count']}
-                        </div>
-                        <div class="small-muted" style="margin-top:6px;">
-                            Latest update: {item['latest_logged_at']}
                         </div>
                     </div>
                     """,
@@ -3669,8 +3668,7 @@ def render_history_page(student_id: str):
                     adjusted=adjusted_hours,
                     actual=actual_hours,
                     completed=completed,
-                    remaining=remaining_hours,
-                    logged_at=logged_at
+                    remaining=remaining_hours
                 )
         else:
             st.info("No feedback logs match the selected filters.")

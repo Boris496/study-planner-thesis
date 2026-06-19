@@ -627,6 +627,24 @@ def build_study_plan(student_id: str):
                 if slot_date_obj < planning_start or slot_date_obj > latest_study_date:
                     continue
 
+                task["_reserve_later_preferred_energy"] = 0.0
+
+                preferred_energy = task.get("preferred_energy")
+
+                if preferred_energy and slot_energy != preferred_energy:
+                    later_preferred_energy_hours = sum(
+                        float(other_slot["remaining_hours"])
+                        for other_slot in free_slots
+                        if slot_date_obj < datetime.strptime(other_slot["study_date"],
+                                                             "%Y-%m-%d").date() <= latest_study_date
+                        and other_slot["energy_level"] == preferred_energy
+                    )
+
+                    if later_preferred_energy_hours >= float(task["adjusted_hours"]):
+                        continue
+
+                    task["_reserve_later_preferred_energy"] = later_preferred_energy_hours
+
                 allowed = ALLOWED_INTENSITIES.get(slot_energy, {"Low"})
                 if task["task_intensity"] not in allowed:
                     continue
@@ -685,24 +703,27 @@ def build_study_plan(student_id: str):
             else:
                 remaining_task_day_quota = float(selected_task["adjusted_hours"])
 
-            if selected_task["task_type"] in COGNITIVE_TASK_TYPES:
-                allocated = min(
-                    slot_remaining,
-                    float(selected_task["adjusted_hours"]),
-                    remaining_day_capacity,
-                    max_session_hours,
-                    remaining_until_break,
-                    remaining_task_day_quota
+            preferred_energy_current_limit = float(selected_task["adjusted_hours"])
+
+            if (
+                    selected_task.get("preferred_energy")
+                    and slot_energy != selected_task.get("preferred_energy")
+                    and selected_task.get("_reserve_later_preferred_energy", 0.0) > 0
+            ):
+                preferred_energy_current_limit = max(
+                    float(selected_task["adjusted_hours"])
+                    - float(selected_task["_reserve_later_preferred_energy"]),
+                    0.0
                 )
-            else:
-                allocated = min(
-                    slot_remaining,
-                    float(selected_task["adjusted_hours"]),
-                    remaining_day_capacity,
-                    max_session_hours,
-                    remaining_until_break,
-                    remaining_task_day_quota
-                )
+
+            allocated = min(
+                slot_remaining,
+                preferred_energy_current_limit,
+                remaining_day_capacity,
+                max_session_hours,
+                remaining_until_break,
+                remaining_task_day_quota
+            )
 
             allocated = round(allocated, 2)
 
