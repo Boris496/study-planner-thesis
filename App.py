@@ -3597,7 +3597,6 @@ def render_history_page(student_id: str):
                         <div><b>Estimated:</b> {item['estimated_hours']} h</div>
                         <div><b>Total actual worked:</b> {round(item['total_actual_hours'], 2)} h</div>
                         <div><b>Latest remaining:</b> {round(item['latest_remaining_hours'], 2)} h</div>
-                        {"<div style='margin-top:8px; color:#92400e;'><b>Note:</b> " + note + "</div>" if note else ""}
                     </div>
                     """,
                     unsafe_allow_html=True
