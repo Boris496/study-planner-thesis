@@ -3361,111 +3361,114 @@ def render_feedback_page(student_id: str):
                 key=f"focus_{feedback_task_id}"
             )
 
-    if st.button("Submit Feedback", key=f"submit_feedback_{feedback_task_id}"):
-        if not did_not_start:
-            if float(actual_hours) <= 0:
-                st.warning("Please enter worked hours greater than 0, or choose 'Did not start task'.")
-                return
-
-            if not completed and float(remaining_hours) <= 0:
-                st.warning("If the task is not completed, remaining hours must be greater than 0.")
-                return
-
-        log_task_feedback(
-            task_id=feedback_task_id,
-            student_id=feedback_student_id,
-            task_name=feedback_task_name,
-            subject=feedback_subject,
-            task_type=feedback_task_type,
-            importance_level=feedback_importance_level,
-            estimated_hours=float(feedback_estimated_hours),
-            adjusted_hours=float(feedback_adjusted_hours),
-            actual_hours=float(actual_hours),
-            completed=completed,
-            remaining_hours=float(remaining_hours),
-            logged_at=datetime.now().isoformat(),
-            did_not_start=did_not_start,
-            perceived_difficulty=perceived_difficulty,
-            mental_effort=mental_effort,
-            confidence_level=confidence_level,
-            focus_level=focus_level
-        )
-
-        st.session_state.pending_ai_preference_proposal = None
-
-        if completed:
-            current_context_text = build_current_reflection_context()
-
-            existing_rows = get_ai_feedback_reflections(student_id, feedback_task_id)
-
-            initial_chat_history = [
-                {"role": row[0], "content": row[1]}
-                for row in existing_rows
-            ]
-
-            ai_reflection = generate_feedback_reflection(
-                task_name=feedback_task_name,
-                subject=feedback_subject,
-                task_type=feedback_task_type,
-                estimated_hours=float(feedback_estimated_hours),
-                adjusted_hours=float(feedback_adjusted_hours),
-                actual_hours=float(actual_hours),
-                remaining_hours=0.0,
-                completed=True,
-                perceived_difficulty=perceived_difficulty,
-                mental_effort=mental_effort,
-                confidence_level=confidence_level,
-                focus_level=focus_level,
-                student_context=current_context_text,
-                chat_history=initial_chat_history
-            )
-
-            save_ai_feedback_reflection(
-                student_id=student_id,
-                task_id=feedback_task_id,
-                role="assistant",
-                content=ai_reflection
-            )
-
-            st.session_state.feedback_reflection_task_id = feedback_task_id
-
-            create_pending_proposal(
-                proposal_task_id=feedback_task_id,
-                proposal_task_name=feedback_task_name,
-                proposal_subject=feedback_subject,
-                proposal_task_type=feedback_task_type,
-                proposal_context_text=current_context_text
-            )
-
-        else:
-            st.session_state.feedback_reflection_task_id = None
-
-        st.session_state.generated_plan = None
-        st.session_state.ai_study_advice = None
-        st.session_state.llm_chat_history = []
-
-        if completed:
-            st.session_state.show_rebuild_option = False
-            st.session_state.pending_rebuild_task_id = None
-            st.success(f"Final feedback for task '{feedback_task_name}' submitted successfully.")
-        else:
-            st.session_state.show_rebuild_option = True
-            st.session_state.pending_rebuild_task_id = feedback_task_id
-
-            if did_not_start:
-                st.success(
-                    f"You indicated that you did not start '{feedback_task_name}'. "
-                    f"The task remains open for replanning."
-                )
-            else:
-                st.success(
-                    f"Session feedback for task '{feedback_task_name}' submitted successfully."
-                )
-
-        st.rerun()
 
     pending_rebuild_id = st.session_state.get("pending_rebuild_task_id")
     show_rebuild_option = st.session_state.get("show_rebuild_option", False)
+
+    if not (show_rebuild_option and pending_rebuild_id == feedback_task_id):
+
+        if st.button("Submit Feedback", key=f"submit_feedback_{feedback_task_id}"):
+            if not did_not_start:
+                if float(actual_hours) <= 0:
+                    st.warning("Please enter worked hours greater than 0, or choose 'Did not start task'.")
+                    return
+
+                if not completed and float(remaining_hours) <= 0:
+                    st.warning("If the task is not completed, remaining hours must be greater than 0.")
+                    return
+
+            log_task_feedback(
+                task_id=feedback_task_id,
+                student_id=feedback_student_id,
+                task_name=feedback_task_name,
+                subject=feedback_subject,
+                task_type=feedback_task_type,
+                importance_level=feedback_importance_level,
+                estimated_hours=float(feedback_estimated_hours),
+                adjusted_hours=float(feedback_adjusted_hours),
+                actual_hours=float(actual_hours),
+                completed=completed,
+                remaining_hours=float(remaining_hours),
+                logged_at=datetime.now().isoformat(),
+                did_not_start=did_not_start,
+                perceived_difficulty=perceived_difficulty,
+                mental_effort=mental_effort,
+                confidence_level=confidence_level,
+                focus_level=focus_level
+            )
+
+            st.session_state.pending_ai_preference_proposal = None
+
+            if completed:
+                current_context_text = build_current_reflection_context()
+
+                existing_rows = get_ai_feedback_reflections(student_id, feedback_task_id)
+
+                initial_chat_history = [
+                    {"role": row[0], "content": row[1]}
+                    for row in existing_rows
+                ]
+
+                ai_reflection = generate_feedback_reflection(
+                    task_name=feedback_task_name,
+                    subject=feedback_subject,
+                    task_type=feedback_task_type,
+                    estimated_hours=float(feedback_estimated_hours),
+                    adjusted_hours=float(feedback_adjusted_hours),
+                    actual_hours=float(actual_hours),
+                    remaining_hours=0.0,
+                    completed=True,
+                    perceived_difficulty=perceived_difficulty,
+                    mental_effort=mental_effort,
+                    confidence_level=confidence_level,
+                    focus_level=focus_level,
+                    student_context=current_context_text,
+                    chat_history=initial_chat_history
+                )
+
+                save_ai_feedback_reflection(
+                    student_id=student_id,
+                    task_id=feedback_task_id,
+                    role="assistant",
+                    content=ai_reflection
+                )
+
+                st.session_state.feedback_reflection_task_id = feedback_task_id
+
+                create_pending_proposal(
+                    proposal_task_id=feedback_task_id,
+                    proposal_task_name=feedback_task_name,
+                    proposal_subject=feedback_subject,
+                    proposal_task_type=feedback_task_type,
+                    proposal_context_text=current_context_text
+                )
+
+            else:
+                st.session_state.feedback_reflection_task_id = None
+
+            st.session_state.generated_plan = None
+            st.session_state.ai_study_advice = None
+            st.session_state.llm_chat_history = []
+
+            if completed:
+                st.session_state.show_rebuild_option = False
+                st.session_state.pending_rebuild_task_id = None
+                st.success(f"Final feedback for task '{feedback_task_name}' submitted successfully.")
+            else:
+                st.session_state.show_rebuild_option = True
+                st.session_state.pending_rebuild_task_id = feedback_task_id
+
+                if did_not_start:
+                    st.success(
+                        f"You indicated that you did not start '{feedback_task_name}'. "
+                        f"The task remains open for replanning."
+                    )
+                else:
+                    st.success(
+                        f"Session feedback for task '{feedback_task_name}' submitted successfully."
+                    )
+
+            st.rerun()
 
     if show_rebuild_option and pending_rebuild_id == feedback_task_id:
         st.info("Feedback has already been submitted for this task.")
@@ -3516,7 +3519,6 @@ def render_feedback_page(student_id: str):
                     st.session_state.pending_rebuild_task_id = None
                     st.rerun()
 
-        return
 
 
 def render_history_page(student_id: str):
