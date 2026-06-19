@@ -2737,7 +2737,7 @@ def render_feedback_page(student_id: str):
         if latest_feedback:
             proposal_estimated_hours = float(latest_feedback[6])
             proposal_adjusted_hours = float(latest_feedback[7])
-            proposal_actual_hours = float(latest_feedback[8])
+            proposal_actual_hours = sum(float(row[8]) for row in latest_feedback_rows)
 
         proposal = generate_learning_preference_proposal(
             task_name=proposal_task_name,
@@ -2887,13 +2887,15 @@ def render_feedback_page(student_id: str):
             latest_feedback_rows.sort(key=lambda row: row[-1], reverse=True)
             latest_feedback = latest_feedback_rows[0] if latest_feedback_rows else None
 
+            reflection_total_actual_hours = sum(float(row[8]) for row in latest_feedback_rows)
+
             ai_reply = generate_feedback_reflection(
                 task_name=loaded_task_name,
                 subject=loaded_subject,
                 task_type=loaded_task_type,
                 estimated_hours=float(latest_feedback[6]) if latest_feedback else float(loaded_estimated_hours),
                 adjusted_hours=float(latest_feedback[7]) if latest_feedback else float(loaded_adjusted_hours),
-                actual_hours=float(latest_feedback[8]) if latest_feedback else 0.0,
+                actual_hours=float(reflection_total_actual_hours) if latest_feedback else 0.0,
                 remaining_hours=float(latest_feedback[10]) if latest_feedback else float(loaded_adjusted_hours),
                 completed=bool(latest_feedback[9]) if latest_feedback else loaded_status == "completed",
                 perceived_difficulty=latest_feedback[11] if latest_feedback and len(latest_feedback) > 11 else None,
@@ -3384,7 +3386,10 @@ def render_feedback_page(student_id: str):
             st.session_state.pending_ai_preference_proposal = None
 
             if completed:
-                current_context_text = build_current_reflection_context()
+                current_context_text = build_current_reflection_context(
+                    subject=feedback_subject,
+                    task_type=feedback_task_type
+                )
 
                 existing_rows = get_ai_feedback_reflections(student_id, feedback_task_id)
 
