@@ -36,7 +36,6 @@ ALLOWED_INTENSITIES = {
     "High": {"Low", "Medium", "High"}
 }
 
-
 TASK_TYPE_TO_INTENSITY = {
     "Study / Learning": "High",
     "Reading": "Medium",
@@ -54,25 +53,21 @@ COGNITIVE_TASK_TYPES = {
     "Writing"
     }
 
-
 def daterange(start_date: date, end_date: date):
     current = start_date
     while current <= end_date:
         yield current
         current += timedelta(days=1)
 
-
 def _calculate_slot_hours(start_time_str: str, end_time_str: str) -> float:
     start_dt = datetime.strptime(start_time_str, "%H:%M")
     end_dt = datetime.strptime(end_time_str, "%H:%M")
     return round((end_dt - start_dt).seconds / 3600, 2)
 
-
 def _add_hours_to_time(time_str: str, hours: float) -> str:
     start_dt = datetime.strptime(time_str, "%H:%M")
     end_dt = start_dt + timedelta(hours=hours)
     return end_dt.strftime("%H:%M")
-
 
 def _normalize_task_type(task_type: str) -> str:
     if task_type in VALID_TASK_TYPES:
@@ -100,7 +95,6 @@ def _normalize_task_type(task_type: str) -> str:
 def _derive_task_intensity(task_type: str) -> str:
     normalized_type = _normalize_task_type(task_type)
     return TASK_TYPE_TO_INTENSITY.get(normalized_type, "Medium")
-
 
 def _merge_overlapping_blocks(blocks: List[dict]) -> List[dict]:
     if not blocks:
@@ -308,7 +302,6 @@ def _build_free_slots(
     all_free_slots.sort(key=lambda s: (s["study_date"], s["start_time"]))
     return all_free_slots, round(total_available_hours, 2)
 
-
 def _build_learning_profile_map(student_id: str) -> dict:
     rows = Database.get_learning_profile_for_student(student_id)
     profile_map = {}
@@ -339,7 +332,6 @@ def _build_learning_profile_map(student_id: str) -> dict:
         }
 
     return profile_map
-
 
 def _estimate_spread_day_target(
     total_hours: float,

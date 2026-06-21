@@ -18,7 +18,6 @@ MAX_RATIO = 1.5
 SMOOTHING_ALPHA = 0.2
 DEFAULT_PLANNING_FACTOR = 1.0
 
-
 def _normalize_task_type(task_type: str) -> str:
     if task_type in VALID_TASK_TYPES:
         return task_type
@@ -41,15 +40,12 @@ def _normalize_task_type(task_type: str) -> str:
 
     return "Study / Learning"
 
-
 def _derive_task_intensity(task_type: str) -> str:
     normalized_type = _normalize_task_type(task_type)
     return TASK_TYPE_TO_INTENSITY.get(normalized_type, "Medium")
 
-
 def _clamp_ratio(ratio: float) -> float:
     return max(MIN_RATIO, min(MAX_RATIO, ratio))
-
 
 # -----------------------------
 # Database connection
@@ -455,7 +451,6 @@ def init_db():
     enable_rls()
     create_default_admin()
 
-
 def create_default_admin():
     conn = get_connection()
     cursor = conn.cursor()
@@ -478,7 +473,6 @@ def create_default_admin():
     cursor.close()
     conn.close()
 
-
 # -----------------------------
 # Admin functions
 # -----------------------------
@@ -495,7 +489,6 @@ def create_admin(username: str, password: str):
     cursor.close()
     conn.close()
 
-
 def get_admin(username: str, password: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -510,7 +503,6 @@ def get_admin(username: str, password: str):
     cursor.close()
     conn.close()
     return admin
-
 
 # -----------------------------
 # Student functions
@@ -544,7 +536,6 @@ def mark_onboarding_seen(student_id: str):
     cursor.close()
     conn.close()
 
-
 def create_student(student_id: str, name: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -557,7 +548,6 @@ def create_student(student_id: str, name: str):
     conn.commit()
     cursor.close()
     conn.close()
-
 
 def get_all_students():
     conn = get_connection()
@@ -574,7 +564,6 @@ def get_all_students():
     conn.close()
     return rows
 
-
 def deactivate_student(student_id: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -589,7 +578,6 @@ def deactivate_student(student_id: str):
     cursor.close()
     conn.close()
 
-
 def activate_student(student_id: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -603,7 +591,6 @@ def activate_student(student_id: str):
     conn.commit()
     cursor.close()
     conn.close()
-
 
 def delete_student_account(student_id: str):
     conn = get_connection()
@@ -673,7 +660,6 @@ def delete_student_account(student_id: str):
     cursor.close()
     conn.close()
 
-
 # -----------------------------
 # Subject functions
 # -----------------------------
@@ -696,7 +682,6 @@ def add_subject(student_id: str, subject_name: str):
     cursor.close()
     conn.close()
 
-
 def get_subjects_for_student(student_id: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -714,7 +699,6 @@ def get_subjects_for_student(student_id: str):
 
     return [row[0] for row in rows]
 
-
 def delete_subject(student_id: str, subject_name: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -728,7 +712,6 @@ def delete_subject(student_id: str, subject_name: str):
     conn.commit()
     cursor.close()
     conn.close()
-
 
 # -----------------------------
 # Task functions
@@ -892,7 +875,6 @@ def get_tasks_for_student(student_id: str):
     conn.close()
     return tasks
 
-
 def get_plannable_tasks_for_student(student_id: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -924,7 +906,6 @@ def get_plannable_tasks_for_student(student_id: str):
     conn.close()
     return tasks
 
-
 def get_task_by_id(task_id: int):
     conn = get_connection()
     cursor = conn.cursor()
@@ -955,7 +936,6 @@ def get_task_by_id(task_id: int):
     conn.close()
     return task
 
-
 def delete_task(task_id: int):
     conn = get_connection()
     cursor = conn.cursor()
@@ -979,7 +959,6 @@ def delete_task(task_id: int):
     cursor.close()
     conn.close()
 
-
 def delete_all_tasks(student_id: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -1002,7 +981,6 @@ def delete_all_tasks(student_id: str):
     conn.commit()
     cursor.close()
     conn.close()
-
 
 # -----------------------------
 # Task feedback / learning
@@ -1256,106 +1234,6 @@ def log_task_feedback(
     cursor.close()
     conn.close()
 
-
-def get_student_task_type_planning_factor(student_id: str, task_type: str, subject: str = "General") -> float:
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    normalized_task_type = _normalize_task_type(task_type)
-    normalized_subject = subject.strip() if subject and subject.strip() else "General"
-
-    cursor.execute("""
-        SELECT planning_factor
-        FROM student_task_type_learning
-        WHERE student_id = %s
-          AND task_type = %s
-          AND subject = %s
-    """, (student_id, normalized_task_type, normalized_subject))
-
-    row = cursor.fetchone()
-    cursor.close()
-    conn.close()
-
-    if not row:
-        return DEFAULT_PLANNING_FACTOR
-
-    try:
-        return float(row[0])
-    except (TypeError, ValueError):
-        return DEFAULT_PLANNING_FACTOR
-
-
-def upsert_student_task_type_learning(
-    student_id: str,
-    task_type: str,
-    new_ratio: float,
-    subject: str = "General"
-):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    normalized_task_type = _normalize_task_type(task_type)
-    normalized_subject = subject.strip() if subject and subject.strip() else "General"
-    clamped_ratio = _clamp_ratio(float(new_ratio))
-    now = datetime.now()
-
-    cursor.execute("""
-        SELECT planning_factor, feedback_count
-        FROM student_task_type_learning
-        WHERE student_id = %s
-          AND task_type = %s
-          AND subject = %s
-    """, (student_id, normalized_task_type, normalized_subject))
-
-    existing = cursor.fetchone()
-
-    if existing:
-        old_factor = float(existing[0])
-        old_feedback_count = int(existing[1])
-
-        new_smoothed_factor = (SMOOTHING_ALPHA * clamped_ratio) + ((1 - SMOOTHING_ALPHA) * old_factor)
-
-        cursor.execute("""
-            UPDATE student_task_type_learning
-            SET planning_factor = %s,
-                feedback_count = %s,
-                updated_at = %s
-            WHERE student_id = %s
-              AND task_type = %s
-              AND subject = %s
-        """, (
-            round(new_smoothed_factor, 4),
-            old_feedback_count + 1,
-            now,
-            student_id,
-            normalized_task_type,
-            normalized_subject
-        ))
-    else:
-        cursor.execute("""
-            INSERT INTO student_task_type_learning (
-                student_id,
-                task_type,
-                subject,
-                planning_factor,
-                feedback_count,
-                updated_at
-            )
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (
-            student_id,
-            normalized_task_type,
-            normalized_subject,
-            round(clamped_ratio, 4),
-            1,
-            now
-        ))
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-
 def get_learning_profile_for_student(student_id: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -1379,7 +1257,6 @@ def get_learning_profile_for_student(student_id: str):
     cursor.close()
     conn.close()
     return rows
-
 
 # -----------------------------
 # History
@@ -1415,7 +1292,6 @@ def get_history_for_student(student_id: str):
     cursor.close()
     conn.close()
     return history
-
 
 def get_task_learning_rows(student_id: str):
     conn = get_connection()
@@ -1581,7 +1457,6 @@ def upsert_day_preference(student_id: str, study_date: str, wake_time: str, slee
     cursor.close()
     conn.close()
 
-
 def delete_day_preference(student_id: str, study_date: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -1595,7 +1470,6 @@ def delete_day_preference(student_id: str, study_date: str):
     conn.commit()
     cursor.close()
     conn.close()
-
 
 def get_day_preferences_for_range(student_id: str, start_date: str, end_date: str):
     conn = get_connection()
@@ -1620,7 +1494,6 @@ def get_day_preferences_for_range(student_id: str, start_date: str, end_date: st
     cursor.close()
     conn.close()
     return rows
-
 
 # -----------------------------
 # Activity slots
@@ -1699,7 +1572,6 @@ def get_activity_slots_for_range(student_id: str, start_date: str, end_date: str
     conn.close()
     return rows
 
-
 def delete_activity_slot(slot_id: int):
     conn = get_connection()
     cursor = conn.cursor()
@@ -1712,7 +1584,6 @@ def delete_activity_slot(slot_id: int):
     conn.commit()
     cursor.close()
     conn.close()
-
 
 # -----------------------------
 # Study plan storage
@@ -1729,7 +1600,6 @@ def clear_saved_study_plan(student_id: str):
     conn.commit()
     cursor.close()
     conn.close()
-
 
 def save_study_plan(student_id: str, daily_plan: dict):
     conn = get_connection()
@@ -1766,75 +1636,6 @@ def save_study_plan(student_id: str, daily_plan: dict):
                 task.get("energy_level"),
                 created_at
             ))
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-def save_planner_personalization_log(student_id: str, task_rows: list, planner_advice: dict):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    advice_map = {
-        item["task_id"]: item
-        for item in planner_advice.get("task_recommendations", [])
-    }
-
-    cursor.execute("""
-        DELETE FROM planner_personalization_log
-        WHERE student_id = %s
-    """, (student_id,))
-
-    created_at = datetime.now()
-
-    for task in task_rows:
-        (
-            task_id,
-            task_name,
-            subject,
-            task_type,
-            importance_level,
-            task_intensity,
-            deadline,
-            estimated_hours,
-            adjusted_hours,
-            status,
-            is_spread_learning,
-            preferred_study_days,
-            min_session_hours,
-            max_session_hours
-        ) = task
-
-        advice = advice_map.get(task_id, {})
-
-        cursor.execute("""
-            INSERT INTO planner_personalization_log (
-                student_id,
-                task_id,
-                task_name,
-                subject,
-                task_type,
-                add_time_buffer_percent,
-                preferred_energy,
-                max_session_hours,
-                avoid_after_high_difficulty_task,
-                reason,
-                created_at
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            student_id,
-            task_id,
-            task_name,
-            subject,
-            task_type,
-            int(advice.get("add_time_buffer_percent", 0)),
-            advice.get("preferred_energy"),
-            advice.get("max_session_hours"),
-            bool(advice.get("avoid_after_high_difficulty_task", False)),
-            advice.get("reason", ""),
-            created_at
-        ))
 
     conn.commit()
     cursor.close()
@@ -1891,7 +1692,6 @@ def save_ai_learning_preference(
     cursor.close()
     conn.close()
 
-
 def get_ai_learning_preferences_for_student(student_id: str):
     conn = get_connection()
     cursor = conn.cursor()
@@ -1915,7 +1715,6 @@ def get_ai_learning_preferences_for_student(student_id: str):
     cursor.close()
     conn.close()
     return rows
-
 
 def get_ai_learning_preferences_for_task(student_id: str, task_type: str, subject: str):
     conn = get_connection()
@@ -2049,7 +1848,6 @@ def get_due_feedback_tasks(student_id: str, current_dt: datetime | None = None):
     conn.close()
     return rows
 
-
 # -----------------------------
 # Estimation analysis helpers
 # -----------------------------
@@ -2064,7 +1862,6 @@ def _classify_estimation_pattern(actual_total_hours: float, estimated_hours: flo
     elif ratio < 0.90:
         return "Overestimated"
     return "Accurate"
-
 
 # -----------------------------
 # Accuracy / Admin analytics
@@ -2151,7 +1948,6 @@ def get_estimation_accuracy_for_student(student_id: str):
 
     return results
 
-
 def get_estimation_accuracy_summary(student_id: str):
     rows = get_estimation_accuracy_for_student(student_id)
 
@@ -2185,7 +1981,6 @@ def get_estimation_accuracy_summary(student_id: str):
         "avg_estimation_error": round(avg_estimation_error, 2),
         "avg_estimation_ratio": round(avg_estimation_ratio, 2)
     }
-
 
 def get_estimation_accuracy_for_all_students():
     conn = get_connection()
@@ -2278,7 +2073,6 @@ def get_estimation_accuracy_for_all_students():
 
     return results
 
-
 def get_admin_summary_per_student():
     rows = get_estimation_accuracy_for_all_students()
 
@@ -2332,7 +2126,6 @@ def get_admin_summary_per_student():
     result.sort(key=lambda x: x["student_id"])
     return result
 
-
 def get_admin_global_summary():
     rows = get_estimation_accuracy_for_all_students()
     comparable_rows = [
@@ -2368,7 +2161,6 @@ def get_admin_global_summary():
         "avg_estimation_error": round(avg_estimation_error, 2),
         "avg_estimation_ratio": round(avg_estimation_ratio, 2)
     }
-
 
 def get_task_type_analysis():
     conn = get_connection()
@@ -2421,7 +2213,6 @@ def get_task_type_analysis():
         })
 
     return results
-
 
 def get_subject_analysis():
     conn = get_connection()
@@ -2497,7 +2288,6 @@ def get_subject_analysis():
 
     return results
 
-
 def get_all_learning_profiles():
     conn = get_connection()
     cursor = conn.cursor()
@@ -2525,7 +2315,6 @@ def get_all_learning_profiles():
     conn.close()
 
     return rows
-
 
 def get_adaptive_planner_evaluation():
     conn = get_connection()
@@ -2597,7 +2386,6 @@ def get_adaptive_planner_evaluation():
         })
 
     return results
-
 
 def get_adaptive_planner_summary():
     rows = get_adaptive_planner_evaluation()

@@ -3,8 +3,6 @@ from google import genai
 import streamlit as st
 import json
 
-
-
 TASK_TYPE_TO_INTENSITY = {
     "Study / Learning": "High",
     "Reading": "Medium",
@@ -17,158 +15,94 @@ TASK_TYPE_TO_INTENSITY = {
 MIN_RATIO = 0.75
 MAX_RATIO = 1.5
 
-
 THEORY_PROMPT = """
 Planning Fallacy Theory:
 The planning fallacy describes the systematic tendency of people to underestimate how much time tasks will require, even when they know that similar tasks in the past took longer than expected.
-
 People often make optimistic predictions about future performance while ignoring relevant historical evidence from previous experiences. This bias is especially common in academic work, long-term assignments, projects with multiple steps, and tasks that contain uncertainty or interruptions.
-
 The planning fallacy is strongly connected to the “inside view.” When people estimate future workload, they mainly focus on their current intentions, ideal future schedules, motivation, best-case scenarios, and imagined successful progress. People naturally simulate how they hope the task will go instead of comparing it to previous real outcomes.
-
 As a result, individuals often underestimate required time, delays, distractions, and overestimate future productivity. Even when previous tasks took significantly longer than expected, people may still remain optimistic because they explain past failures as exceptions, believe external factors caused previous delays, or assume they will behave differently this time.
-
 Motivation can further strengthen unrealistic optimism. When people strongly want a task to go well or finish quickly, they often predict better outcomes without meaningfully changing their actual behavior.
-
 The planning fallacy becomes stronger in complex tasks, open-ended assignments, unfamiliar topics, tasks requiring sustained focus, and long-duration projects. Short and simple tasks are generally easier to estimate accurately.
-
 Repeated underestimation patterns may indicate unrealistic planning habits, insufficient reflection on previous experiences, overconfidence, ineffective workload estimation, or difficulty translating intentions into realistic schedules.
-
 When interpreting student behavior, reason about whether the student consistently underestimates workload, whether previous experiences are being ignored, whether optimism may distort future planning, whether the student focuses mainly on ideal scenarios, and whether repeated deadline pressure reflects unrealistic expectations rather than lack of effort.
-
 
 Cognitive Load Theory:
 Cognitive Load Theory explains how learning and performance are influenced by the limited capacity of working memory.
-
 Human working memory can only process a limited amount of information simultaneously. When too much information, complexity, or mental processing is required at the same time, cognitive overload can occur. Learning becomes less effective when mental demands exceed available cognitive resources.
-
 Cognitive load can originate from task complexity, unfamiliar material, multitasking, distractions, poor instructional structure, insufficient prior knowledge, or sustained concentration demands.
-
 Complex academic tasks often require students to process multiple concepts, maintain attention over time, integrate information, solve problems, and continuously update working memory. This can increase mental effort significantly.
-
 High cognitive load may lead to mental exhaustion, slower progress, concentration problems, increased frustration, reduced comprehension, declining motivation, and reduced ability to maintain focus.
-
 Students experiencing high mental effort are not necessarily incapable or unmotivated. Performance difficulties may instead reflect excessive cognitive demands placed on working memory.
-
 Prior knowledge influences cognitive load strongly. Familiar or repetitive tasks usually require less mental effort because cognitive processes become more automated over time. Unfamiliar or conceptually difficult tasks generally require deeper processing, more working memory resources, and greater sustained concentration.
-
 Cognitive overload may also accumulate gradually across long study sessions without sufficient recovery or breaks.
-
 When interpreting student behavior, reason about whether workload complexity exceeds cognitive capacity, whether sustained concentration may contribute to fatigue, whether task structure or unfamiliarity increases mental strain, whether focus problems may reflect overload rather than lack of motivation, and whether balanced workload distribution could improve learning efficiency.
-
 
 Self-Efficacy Theory:
 Self-efficacy refers to a person’s belief in their own ability to successfully perform tasks and overcome challenges.
-
 Students with high self-efficacy generally believe they are capable of handling difficult situations, learning new material, and recovering from setbacks. This belief strongly influences motivation, persistence, emotional responses, and academic behavior.
-
 High self-efficacy is often associated with greater persistence, stronger resilience, willingness to attempt difficult tasks, higher motivation, and more adaptive coping strategies during setbacks.
-
 Students with low self-efficacy may doubt their abilities, avoid challenging tasks, lose confidence quickly, experience anxiety more easily, disengage after failure, or underestimate their own competence.
-
 Confidence does not always reflect actual performance accurately. A student may objectively perform well while still feeling insecure or uncertain. Similarly, some students may appear confident while underestimating task complexity.
-
 Repeated experiences influence self-efficacy over time. Repeated failures, unfinished tasks, or overwhelming workload experiences may gradually lower confidence and willingness to engage with similar tasks in the future.
-
 Positive mastery experiences, successful completion, and manageable progress can strengthen self-efficacy over time.
-
 Self-efficacy also affects emotional interpretation of difficulty. Students with lower self-efficacy may interpret normal academic struggle as evidence of inability, while students with higher self-efficacy may interpret the same struggle as a normal learning challenge.
-
 When interpreting student behavior, reason about confidence patterns across tasks, emotional responses to difficulty, avoidance or disengagement, persistence during challenging situations, whether repeated setbacks influence future expectations, and whether low confidence reflects actual inability or perceived lack of control.
-
 
 Self-Regulated Learning Theory:
 Self-regulated learning refers to the ability of learners to actively manage, monitor, and adapt their own learning process.
-
 Effective learners do not simply complete tasks passively. They continuously plan their behavior, monitor progress, evaluate outcomes, reflect on mistakes, and adapt future strategies based on previous experiences.
-
 Self-regulated learning includes goal setting, time management, workload planning, concentration management, self-monitoring, reflection, and behavioral adjustment.
-
 Students differ significantly in their ability to regulate learning effectively. Some students monitor their workload realistically, recognize ineffective habits, and adapt strategies over time. Other students may repeat ineffective behaviors, underestimate workload repeatedly, struggle to reflect on mistakes, or fail to translate reflection into behavioral change.
-
 Reflection is a critical component of learning improvement. Students who recognize recurring patterns in procrastination, workload estimation, concentration, stress, or study behavior are more likely to improve future performance.
-
 Self-regulated learning also involves emotional regulation. Academic performance is influenced not only by cognitive ability, but also by motivation, stress management, persistence, and adaptation after setbacks.
-
 Learning improvement is often gradual and iterative rather than immediate.
-
 When interpreting student behavior, reason about whether the student reflects on previous experiences, whether behavioral adaptation occurs over time, whether recurring problems are recognized, whether planning behavior improves after feedback, and whether the student demonstrates awareness of their own learning process.
-
 
 Metacognition Theory:
 Metacognition refers to awareness and understanding of one’s own thinking, learning, and cognitive processes.
-
 Metacognition includes monitoring understanding, evaluating progress, recognizing limitations, judging task difficulty, and adapting strategies when necessary.
-
 Students with stronger metacognitive skills are generally better at realistic workload estimation, recognizing confusion early, adjusting ineffective strategies, evaluating learning quality, and reflecting accurately on performance.
-
 Weak metacognitive awareness may lead students to overestimate understanding, underestimate workload, fail to recognize ineffective learning habits, or continue inefficient strategies despite poor outcomes.
-
 Metacognitive monitoring is especially important during complex academic tasks that require planning, self-evaluation, sustained attention, and adaptive problem solving.
-
 Poor metacognitive awareness can contribute to repeated planning errors because students may fail to accurately judge how difficult a task actually is, how much concentration it requires, or how effectively they are learning.
-
 Metacognition is closely connected to reflection and self-awareness. Students who develop stronger reflective understanding of their learning behavior are often better able to identify recurring problems, make realistic predictions, and improve future study strategies.
-
 When interpreting student behavior, reason about realism of self-evaluation, awareness of strengths and weaknesses, recognition of recurring mistakes, ability to monitor progress accurately, and whether the student demonstrates reflective insight into their own study behavior.
-
 
 Distributed Practice Theory:
 Distributed practice refers to spreading learning activities across multiple study sessions over time instead of concentrating learning into one long uninterrupted session.
-
 Research consistently shows that distributed learning improves long-term retention, recall strength, understanding, consolidation of knowledge, and sustainable learning performance.
-
 Massed practice, often called cramming, may produce temporary short-term progress but often results in quicker forgetting, reduced retention, cognitive overload, mental exhaustion, and declining concentration over time.
-
 Spacing learning sessions allows the brain to consolidate information, recover from cognitive effort, and revisit material with refreshed attention.
-
 Distributed practice is especially beneficial for complex learning, conceptual understanding, long-term memory formation, and tasks requiring sustained cognitive effort.
-
 Long uninterrupted sessions may increase fatigue and reduce learning efficiency even when students remain motivated. Repeated exposure across multiple sessions can strengthen understanding while reducing excessive cognitive strain during individual study periods.
-
 Different tasks may benefit differently from distribution. Difficult conceptual tasks generally benefit more from spacing than highly repetitive or procedural tasks.
-
 When interpreting student behavior, reason about whether workload is concentrated too heavily, whether long sessions contribute to fatigue or declining focus, whether learning distribution may improve retention, whether repeated short sessions could support better sustainability, and whether spacing could reduce cognitive overload.
-
 
 Mental Fatigue Theory:
 Mental fatigue develops after prolonged periods of cognitive effort, sustained attention, and continuous mental processing. Mental fatigue is a gradual reduction in cognitive efficiency caused by extended mental workload.
-
 High cognitive demands over time can reduce concentration, working memory performance, motivation, attention control, self-regulation, and decision-making quality.
-
 Mental fatigue may accumulate across long study sessions, multiple difficult tasks, prolonged focus demands, insufficient breaks, stress, or sustained academic pressure.
-
 Tasks that require deep concentration, complex reasoning, problem solving, information integration, or continuous attention are especially mentally demanding.
-
 Symptoms of mental fatigue may include declining focus, slower progress, increased distraction, reduced motivation, frustration, emotional exhaustion, difficulty maintaining effort, and reduced study efficiency.
-
 Performance problems are not always caused by low ability or low motivation. Students may experience temporary reductions in performance simply because cognitive resources have become depleted.
-
 Mental fatigue can also influence emotional experiences, causing students to perceive tasks as more difficult, overwhelming, or frustrating after extended effort.
-
 Recovery periods, balanced workload distribution, breaks, variation in task intensity, and sustainable pacing may reduce accumulated fatigue.
-
 When interpreting student behavior, reason about whether cognitive exhaustion may explain reduced focus, whether workload intensity accumulates over time, whether prolonged concentration contributes to declining efficiency, whether recovery opportunities are sufficient, and whether fatigue rather than ability explains performance difficulties.
 """
 
-
 def get_client():
     return genai.Client(api_key=st.secrets["gemini_api_key"])
-
 
 def _safe_text(value) -> str:
     if value is None:
         return "N/A"
     return str(value)
 
-
 def _clamp_ratio(ratio: float) -> float:
     return max(MIN_RATIO, min(MAX_RATIO, ratio))
 
-
 def _derive_intensity_from_task_type(task_type: str) -> str:
     return TASK_TYPE_TO_INTENSITY.get(task_type, "Medium")
-
 
 def _format_daily_plan(daily_plan: dict) -> str:
     if not daily_plan:
@@ -202,7 +136,6 @@ def _format_daily_plan(daily_plan: dict) -> str:
                 )
     return "\n".join(lines)
 
-
 def _format_unscheduled_tasks(unscheduled_tasks: list) -> str:
     if not unscheduled_tasks:
         return "No unscheduled tasks."
@@ -219,7 +152,6 @@ def _format_unscheduled_tasks(unscheduled_tasks: list) -> str:
             f"intensity: {item.get('task_intensity', _derive_intensity_from_task_type(item.get('task_type', '')))}"
         )
     return "\n".join(lines)
-
 
 def _format_recent_feedback_examples(history_rows: list, max_items: int = 8) -> str:
     if not history_rows:
@@ -283,7 +215,6 @@ def _format_recent_feedback_examples(history_rows: list, max_items: int = 8) -> 
 
     return "\n".join(item["text"] for item in task_summaries[:max_items])
 
-
 def _format_learning_profile(learning_profile_rows: list) -> str:
     if not learning_profile_rows:
         return "No personal learning profile available yet."
@@ -314,7 +245,6 @@ def _format_learning_profile(learning_profile_rows: list) -> str:
         )
 
     return "\n".join(lines)
-
 
 def _format_task_feasibility(tasks: list, daily_plan: dict) -> str:
     if not tasks:
@@ -387,7 +317,6 @@ def _format_task_feasibility(tasks: list, daily_plan: dict) -> str:
         )
 
     return "\n".join(lines)
-
 
 def summarize_learning_patterns(history_rows: list) -> str:
     if not history_rows:
@@ -611,7 +540,6 @@ Planner/system context:
 """
     return context.strip()
 
-
 def _build_conversation_text(chat_history: list, empty_text: str) -> str:
     if not chat_history:
         return empty_text
@@ -623,7 +551,6 @@ def _build_conversation_text(chat_history: list, empty_text: str) -> str:
         conversation_lines.append(f"{role.upper()}: {content}")
 
     return "\n".join(conversation_lines)
-
 
 def chat_with_study_coach(
     student_context: str,
@@ -768,7 +695,6 @@ Latest student message:
     )
 
     return response.text
-
 
 def generate_feedback_reflection(
     task_name: str,
@@ -1457,34 +1383,3 @@ Latest student question:
     )
 
     return response.text
-
-
-def _build_learning_profile_lookup(learning_profile_rows: list) -> dict:
-    lookup = {}
-
-    for row in learning_profile_rows:
-        (
-            task_type,
-            subject,
-            planning_factor,
-            feedback_count,
-            avg_difficulty,
-            avg_mental_effort,
-            avg_confidence,
-            avg_focus,
-
-        ) = row
-
-        lookup[(task_type, subject)] = {
-            "planning_factor": float(planning_factor or 1.0),
-            "feedback_count": int(feedback_count or 0),
-            "avg_difficulty": float(avg_difficulty or 0.0),
-            "avg_mental_effort": float(avg_mental_effort or 0.0),
-            "avg_confidence": float(avg_confidence or 0.0),
-            "avg_focus": float(avg_focus or 0.0),
-        }
-
-    return lookup
-
-
-
