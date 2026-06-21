@@ -225,16 +225,26 @@ def _format_recent_feedback_examples(history_rows: list, max_items: int = 8) -> 
     if not history_rows:
         return "No recent feedback examples available."
 
-    lines = []
+    grouped_tasks = defaultdict(list)
 
-    for row in history_rows[:max_items]:
+    for row in history_rows:
+        task_id = row[0]
+        grouped_tasks[task_id].append(row)
+
+    task_summaries = []
+
+    for task_id, rows in grouped_tasks.items():
+        rows.sort(key=lambda r: r[-1], reverse=True)
+        latest_row = rows[0]
+
         (
+            _task_id,
             task_name,
             subject,
             task_type,
             importance_level,
             estimated_hours,
-            actual_hours,
+            _actual_hours,
             remaining_hours,
             completed,
             perceived_difficulty,
@@ -242,13 +252,13 @@ def _format_recent_feedback_examples(history_rows: list, max_items: int = 8) -> 
             confidence_level,
             focus_level,
             logged_at
-        ) = row
+        ) = latest_row
 
-        estimated_hours = float(estimated_hours) if estimated_hours else 0.0
-        actual_hours = float(actual_hours) if actual_hours else 0.0
-        remaining_hours = float(remaining_hours) if remaining_hours else 0.0
+        estimated_hours = float(estimated_hours or 0.0)
+        total_actual_hours = sum(float(r[6] or 0.0) for r in rows)
+        remaining_hours = float(remaining_hours or 0.0)
 
-        total_needed = round(actual_hours + remaining_hours, 2)
+        total_needed = round(total_actual_hours + remaining_hours, 2)
         completed_text = "completed" if completed else "not completed"
 
         ratio_text = "N/A"
@@ -257,15 +267,21 @@ def _format_recent_feedback_examples(history_rows: list, max_items: int = 8) -> 
             clamped_ratio = _clamp_ratio(raw_ratio)
             ratio_text = f"raw ratio: {round(raw_ratio, 2)} | clamped ratio: {round(clamped_ratio, 2)}"
 
-        lines.append(
-            f"- {task_name} | subject: {subject} | type: {task_type} | importance: {importance_level} | "
-            f"estimated: {estimated_hours}h | total needed: {total_needed}h | "
-            f"{ratio_text} | difficulty: {perceived_difficulty} | "
-            f"effort: {mental_effort} | confidence: {confidence_level} | focus: {focus_level} | "
-            f"status: {completed_text} | logged at: {logged_at}"
-        )
+        task_summaries.append({
+            "logged_at": logged_at,
+            "text": (
+                f"- {task_name} | subject: {subject} | type: {task_type} | importance: {importance_level} | "
+                f"estimated: {estimated_hours}h | total actual worked: {round(total_actual_hours, 2)}h | "
+                f"latest remaining: {remaining_hours}h | total needed: {total_needed}h | "
+                f"{ratio_text} | difficulty: {perceived_difficulty} | "
+                f"effort: {mental_effort} | confidence: {confidence_level} | focus: {focus_level} | "
+                f"status: {completed_text} | latest update: {logged_at}"
+            )
+        })
 
-    return "\n".join(lines)
+    task_summaries.sort(key=lambda x: x["logged_at"], reverse=True)
+
+    return "\n".join(item["text"] for item in task_summaries[:max_items])
 
 
 def _format_learning_profile(learning_profile_rows: list) -> str:
@@ -377,16 +393,26 @@ def summarize_learning_patterns(history_rows: list) -> str:
     if not history_rows:
         return "No historical feedback available yet."
 
-    grouped = defaultdict(list)
+    grouped_tasks = defaultdict(list)
 
     for row in history_rows:
+        task_id = row[0]
+        grouped_tasks[task_id].append(row)
+
+    grouped_patterns = defaultdict(list)
+
+    for task_id, rows in grouped_tasks.items():
+        rows.sort(key=lambda r: r[-1], reverse=True)
+        latest_row = rows[0]
+
         (
+            _task_id,
             task_name,
             subject,
             task_type,
             importance_level,
             estimated_hours,
-            actual_hours,
+            _actual_hours,
             remaining_hours,
             completed,
             perceived_difficulty,
@@ -394,23 +420,23 @@ def summarize_learning_patterns(history_rows: list) -> str:
             confidence_level,
             focus_level,
             logged_at
-        ) = row
+        ) = latest_row
 
         if estimated_hours is None:
             continue
 
         estimated_hours = float(estimated_hours)
-        actual_hours = float(actual_hours) if actual_hours is not None else 0.0
-        remaining_hours = float(remaining_hours) if remaining_hours is not None else 0.0
-
         if estimated_hours <= 0:
             continue
 
-        total_needed = actual_hours + remaining_hours
+        total_actual_hours = sum(float(r[6] or 0.0) for r in rows)
+        remaining_hours = float(remaining_hours or 0.0)
+
+        total_needed = total_actual_hours + remaining_hours
         raw_ratio = total_needed / estimated_hours
         clamped_ratio = _clamp_ratio(raw_ratio)
 
-        grouped[(task_type, subject)].append({
+        grouped_patterns[(task_type, subject)].append({
             "importance_level": importance_level,
             "estimated_hours": estimated_hours,
             "total_needed": total_needed,
@@ -422,26 +448,16 @@ def summarize_learning_patterns(history_rows: list) -> str:
             "focus": float(focus_level) if focus_level is not None else None,
         })
 
-    if not grouped:
+    if not grouped_patterns:
         return "No usable learning patterns found."
 
     lines = []
 
-    for (task_type, subject), items in sorted(grouped.items()):
+    for (task_type, subject), items in sorted(grouped_patterns.items()):
         avg_raw_ratio = sum(x["raw_ratio"] for x in items) / len(items)
         avg_clamped_ratio = sum(x["clamped_ratio"] for x in items) / len(items)
         avg_estimated = sum(x["estimated_hours"] for x in items) / len(items)
         avg_total_needed = sum(x["total_needed"] for x in items) / len(items)
-
-        difficulty_vals = [x["difficulty"] for x in items if x["difficulty"] is not None]
-        effort_vals = [x["effort"] for x in items if x["effort"] is not None]
-        confidence_vals = [x["confidence"] for x in items if x["confidence"] is not None]
-        focus_vals = [x["focus"] for x in items if x["focus"] is not None]
-
-        avg_difficulty = round(sum(difficulty_vals) / len(difficulty_vals), 2) if difficulty_vals else None
-        avg_effort = round(sum(effort_vals) / len(effort_vals), 2) if effort_vals else None
-        avg_confidence = round(sum(confidence_vals) / len(confidence_vals), 2) if confidence_vals else None
-        avg_focus = round(sum(focus_vals) / len(focus_vals), 2) if focus_vals else None
 
         if avg_clamped_ratio > 1.15:
             pattern = "usually underestimated"
@@ -450,27 +466,15 @@ def summarize_learning_patterns(history_rows: list) -> str:
         else:
             pattern = "usually estimated fairly accurately"
 
-        line = (
-            f"Task type: {task_type} | "
-            f"subject: {subject} | "
-            f"samples: {len(items)} | "
+        lines.append(
+            f"Task type: {task_type} | subject: {subject} | "
+            f"samples: {len(items)} task-level examples | "
             f"avg estimated: {round(avg_estimated, 2)}h | "
             f"avg total needed: {round(avg_total_needed, 2)}h | "
             f"avg raw ratio: {round(avg_raw_ratio, 2)} | "
             f"avg clamped ratio: {round(avg_clamped_ratio, 2)} | "
             f"time estimation pattern: {pattern}"
         )
-
-        if avg_difficulty is not None:
-            line += f" | avg difficulty: {avg_difficulty}"
-        if avg_effort is not None:
-            line += f" | avg mental effort: {avg_effort}"
-        if avg_confidence is not None:
-            line += f" | avg confidence: {avg_confidence}"
-        if avg_focus is not None:
-            line += f" | avg focus: {avg_focus}"
-
-        lines.append(line)
 
     return "\n".join(lines)
 
@@ -1483,204 +1487,4 @@ def _build_learning_profile_lookup(learning_profile_rows: list) -> dict:
     return lookup
 
 
-def get_planner_advice(student_context: str, tasks: list, learning_profile_rows: list) -> dict:
-    client = get_client()
-    learning_profile_lookup = _build_learning_profile_lookup(learning_profile_rows)
 
-    task_lines = []
-
-    for task in tasks:
-        (
-            task_id,
-            task_name,
-            subject,
-            task_type,
-            importance_level,
-            task_intensity,
-            deadline,
-            estimated_hours,
-            adjusted_hours,
-            status,
-            is_spread_learning,
-            preferred_study_days,
-            min_session_hours,
-            max_session_hours
-        ) = task
-
-        profile = learning_profile_lookup.get((task_type, subject), {})
-        feedback_count = int(profile.get("feedback_count", 0))
-
-        task_lines.append(
-            f"- task_id: {task_id} | "
-            f"name: {task_name} | "
-            f"subject: {subject} | "
-            f"type: {task_type} | "
-            f"importance: {importance_level} | "
-            f"intensity: {task_intensity} | "
-            f"deadline: {deadline} | "
-            f"estimated_hours: {estimated_hours} | "
-            f"adjusted_hours: {adjusted_hours} | "
-            f"learning_feedback_count_for_same_type_and_subject: {feedback_count} | "
-            f"historical_time_ratio: {round(float(profile.get('planning_factor', 1.0)), 2) if profile else 'N/A'} | "
-            f"avg_difficulty: {round(float(profile.get('avg_difficulty', 0.0)), 2) if profile else 'N/A'} | "
-            f"avg_mental_effort: {round(float(profile.get('avg_mental_effort', 0.0)), 2) if profile else 'N/A'} | "
-            f"avg_confidence: {round(float(profile.get('avg_confidence', 0.0)), 2) if profile else 'N/A'} | "
-            f"avg_focus: {round(float(profile.get('avg_focus', 0.0)), 2) if profile else 'N/A'} | "
-            f"status: {status} | "
-            f"spread_learning: {is_spread_learning} | "
-            f"preferred_study_days: {preferred_study_days} | "
-            f"min_session_hours: {min_session_hours} | "
-            f"max_session_hours: {max_session_hours}"
-        )
-
-    tasks_text = "\n".join(task_lines) if task_lines else "No tasks available."
-
-    prompt = f"""
-You are NOT the scheduler.
-
-You are the theory-grounded personalization layer of the study planning system.
-
-Your role is to:
-- interpret the student's historical learning behaviour,
-- reason about cognitive and motivational patterns,
-- detect possible workload risks,
-- and return task-level personalization recommendations.
-
-The deterministic planner is responsible for:
-- deadlines,
-- available time windows,
-- daily capacity,
-- slot allocation,
-- no-overlap logic,
-- and hard scheduling constraints.
-
-You do NOT directly schedule tasks.
-You only provide personalized planning recommendations based on educational psychology theory and historical student behaviour.
-
-Your recommendations should be treated as adaptive hypotheses, not absolute truths.
-
-Use the following educational psychology theories as reasoning foundations:
-
-{THEORY_PROMPT}
-
-Your task:
-Translate the student's historical feedback, learning profile, and current task context into personalized planning recommendations for the scheduler.
-
-Do not use rigid threshold-based reasoning.
-Do not assume one feedback moment proves a stable behavioral pattern.
-Reason dynamically from the theories and the available student context.
-If little or no historical data is available for the same task type and subject, avoid strong personalization.
-
-Return ONLY valid raw JSON.
-Do not use markdown.
-Do not wrap the JSON in triple backticks.
-Do not add explanations outside the JSON.
-
-Schema:
-{{
-  "task_recommendations": [
-    {{
-      "task_id": <int>,
-      "add_time_buffer_percent": <int from 0 to 30>,
-      "preferred_energy": <"High" | "Medium" | "Low" | null>,
-      "max_session_hours": <0.5 | 1.0 | 1.5 | null>,
-      "avoid_after_high_difficulty_task": <true | false>,
-      "reason": <short string>
-    }}
-  ]
-}}
-
-Guidance:
-- Make recommendations per task.
-- Use the theories to reason about possible patterns in planning accuracy, cognitive load, self-efficacy, self-regulation, metacognition, distributed practice, and mental fatigue.
-- The reason should briefly explain the interpretation, not quote rules.
-- If no meaningful personalization is justified, return neutral values:
-  add_time_buffer_percent = 0,
-  preferred_energy = null,
-  max_session_hours = null,
-  avoid_after_high_difficulty_task = false.
-- Keep the reason short and grounded in the provided data.
-- Do not invent data.
-
-Student context:
-{student_context}
-
-Tasks:
-{tasks_text}
-"""
-
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt
-    )
-
-    raw_text = response.text.strip()
-    cleaned_text = raw_text
-
-    if cleaned_text.startswith("```json"):
-        cleaned_text = cleaned_text.removeprefix("```json").strip()
-    elif cleaned_text.startswith("```"):
-        cleaned_text = cleaned_text.removeprefix("```").strip()
-
-    if cleaned_text.endswith("```"):
-        cleaned_text = cleaned_text.removesuffix("```").strip()
-
-    try:
-        parsed = json.loads(cleaned_text)
-        return parsed
-    except json.JSONDecodeError:
-        return {"task_recommendations": []}
-
-
-def validate_planner_advice(advice: dict) -> dict:
-    cleaned = {"task_recommendations": []}
-
-    if not isinstance(advice, dict):
-        return cleaned
-
-    items = advice.get("task_recommendations", [])
-    if not isinstance(items, list):
-        return cleaned
-
-    valid_energy = {"High", "Medium", "Low", None}
-    valid_sessions = {0.5, 1.0, 1.5, None}
-
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-
-        task_id = item.get("task_id")
-        if not isinstance(task_id, int):
-            continue
-
-        add_time_buffer_percent = item.get("add_time_buffer_percent", 0)
-        if not isinstance(add_time_buffer_percent, int):
-            add_time_buffer_percent = 0
-        add_time_buffer_percent = max(0, min(30, add_time_buffer_percent))
-
-        preferred_energy = item.get("preferred_energy")
-        if preferred_energy not in valid_energy:
-            preferred_energy = None
-
-        max_session_hours = item.get("max_session_hours")
-        if max_session_hours not in valid_sessions:
-            max_session_hours = None
-
-        avoid_after_high_difficulty_task = item.get("avoid_after_high_difficulty_task", False)
-        if not isinstance(avoid_after_high_difficulty_task, bool):
-            avoid_after_high_difficulty_task = False
-
-        reason = item.get("reason", "")
-        if not isinstance(reason, str):
-            reason = ""
-
-        cleaned["task_recommendations"].append({
-            "task_id": task_id,
-            "add_time_buffer_percent": add_time_buffer_percent,
-            "preferred_energy": preferred_energy,
-            "max_session_hours": max_session_hours,
-            "avoid_after_high_difficulty_task": avoid_after_high_difficulty_task,
-            "reason": reason.strip()
-        })
-
-    return cleaned

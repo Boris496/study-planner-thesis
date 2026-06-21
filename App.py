@@ -2043,8 +2043,6 @@ def render_planning_setup_page(student_id: str):
 
             )
 
-            st.markdown("### Tasks that need feedback first")
-
             for task_id, task_name, subject, task_type, importance_level, latest_due_date, latest_due_time in due_feedback_tasks:
                 st.markdown(
                     f"""
