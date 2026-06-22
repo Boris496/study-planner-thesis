@@ -267,6 +267,7 @@ def _format_recent_feedback_examples(history_rows: list, max_items: int = 8) -> 
 
     for row in history_rows[:max_items]:
         (
+            task_id,
             task_name,
             subject,
             task_type,
@@ -418,18 +419,29 @@ def summarize_learning_patterns(history_rows: list) -> str:
     grouped = defaultdict(list)
 
     for row in history_rows:
-        parsed = _parse_history_row(row)
-        if not parsed:
-            continue
-
-        estimated_hours = parsed["estimated_hours"]
+        (
+            task_id,
+            task_name,
+            subject,
+            task_type,
+            importance_level,
+            estimated_hours,
+            actual_hours,
+            remaining_hours,
+            completed,
+            perceived_difficulty,
+            mental_effort,
+            confidence_level,
+            focus_level,
+            logged_at
+        ) = row
 
         if estimated_hours is None:
             continue
 
         estimated_hours = float(estimated_hours)
-        actual_hours = float(parsed["actual_hours"]) if parsed["actual_hours"] is not None else 0.0
-        remaining_hours = float(parsed["remaining_hours"]) if parsed["remaining_hours"] is not None else 0.0
+        actual_hours = float(actual_hours) if actual_hours is not None else 0.0
+        remaining_hours = float(remaining_hours) if remaining_hours is not None else 0.0
 
         if estimated_hours <= 0:
             continue
@@ -438,16 +450,16 @@ def summarize_learning_patterns(history_rows: list) -> str:
         raw_ratio = total_needed / estimated_hours
         clamped_ratio = _clamp_ratio(raw_ratio)
 
-        grouped[(parsed["task_type"], parsed["subject"])].append({
-            "importance_level": parsed["importance_level"],
+        grouped[(task_type, subject)].append({
+            "importance_level": importance_level,
             "estimated_hours": estimated_hours,
             "total_needed": total_needed,
             "raw_ratio": raw_ratio,
             "clamped_ratio": clamped_ratio,
-            "difficulty": float(parsed["perceived_difficulty"]) if parsed["perceived_difficulty"] is not None else None,
-            "effort": float(parsed["mental_effort"]) if parsed["mental_effort"] is not None else None,
-            "confidence": float(parsed["confidence_level"]) if parsed["confidence_level"] is not None else None,
-            "focus": float(parsed["focus_level"]) if parsed["focus_level"] is not None else None,
+            "difficulty": float(perceived_difficulty) if perceived_difficulty is not None else None,
+            "effort": float(mental_effort) if mental_effort is not None else None,
+            "confidence": float(confidence_level) if confidence_level is not None else None,
+            "focus": float(focus_level) if focus_level is not None else None,
         })
 
     if not grouped:
@@ -461,6 +473,16 @@ def summarize_learning_patterns(history_rows: list) -> str:
         avg_estimated = sum(x["estimated_hours"] for x in items) / len(items)
         avg_total_needed = sum(x["total_needed"] for x in items) / len(items)
 
+        difficulty_vals = [x["difficulty"] for x in items if x["difficulty"] is not None]
+        effort_vals = [x["effort"] for x in items if x["effort"] is not None]
+        confidence_vals = [x["confidence"] for x in items if x["confidence"] is not None]
+        focus_vals = [x["focus"] for x in items if x["focus"] is not None]
+
+        avg_difficulty = round(sum(difficulty_vals) / len(difficulty_vals), 2) if difficulty_vals else None
+        avg_effort = round(sum(effort_vals) / len(effort_vals), 2) if effort_vals else None
+        avg_confidence = round(sum(confidence_vals) / len(confidence_vals), 2) if confidence_vals else None
+        avg_focus = round(sum(focus_vals) / len(focus_vals), 2) if focus_vals else None
+
         if avg_clamped_ratio > 1.15:
             pattern = "usually underestimated"
         elif avg_clamped_ratio < 0.85:
@@ -468,7 +490,7 @@ def summarize_learning_patterns(history_rows: list) -> str:
         else:
             pattern = "usually estimated fairly accurately"
 
-        lines.append(
+        line = (
             f"Task type: {task_type} | "
             f"subject: {subject} | "
             f"samples: {len(items)} | "
@@ -478,6 +500,17 @@ def summarize_learning_patterns(history_rows: list) -> str:
             f"avg clamped ratio: {round(avg_clamped_ratio, 2)} | "
             f"time estimation pattern: {pattern}"
         )
+
+        if avg_difficulty is not None:
+            line += f" | avg difficulty: {avg_difficulty}"
+        if avg_effort is not None:
+            line += f" | avg mental effort: {avg_effort}"
+        if avg_confidence is not None:
+            line += f" | avg confidence: {avg_confidence}"
+        if avg_focus is not None:
+            line += f" | avg focus: {avg_focus}"
+
+        lines.append(line)
 
     return "\n".join(lines)
 
