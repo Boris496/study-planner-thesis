@@ -220,6 +220,44 @@ def _format_unscheduled_tasks(unscheduled_tasks: list) -> str:
         )
     return "\n".join(lines)
 
+def _parse_history_row(row):
+    if len(row) == 14:
+        return {
+            "task_id": row[0],
+            "task_name": row[1],
+            "subject": row[2],
+            "task_type": row[3],
+            "importance_level": row[4],
+            "estimated_hours": row[5],
+            "actual_hours": row[6],
+            "remaining_hours": row[7],
+            "completed": row[8],
+            "perceived_difficulty": row[9],
+            "mental_effort": row[10],
+            "confidence_level": row[11],
+            "focus_level": row[12],
+            "logged_at": row[13],
+        }
+
+    if len(row) == 13:
+        return {
+            "task_id": f"{row[0]}|{row[1]}|{row[2]}",
+            "task_name": row[0],
+            "subject": row[1],
+            "task_type": row[2],
+            "importance_level": row[3],
+            "estimated_hours": row[4],
+            "actual_hours": row[5],
+            "remaining_hours": row[6],
+            "completed": row[7],
+            "perceived_difficulty": row[8],
+            "mental_effort": row[9],
+            "confidence_level": row[10],
+            "focus_level": row[11],
+            "logged_at": row[12],
+        }
+
+    return None
 
 def _format_recent_feedback_examples(history_rows: list, max_items: int = 8) -> str:
     if not history_rows:
@@ -380,28 +418,18 @@ def summarize_learning_patterns(history_rows: list) -> str:
     grouped = defaultdict(list)
 
     for row in history_rows:
-        (
-            task_name,
-            subject,
-            task_type,
-            importance_level,
-            estimated_hours,
-            actual_hours,
-            remaining_hours,
-            completed,
-            perceived_difficulty,
-            mental_effort,
-            confidence_level,
-            focus_level,
-            logged_at
-        ) = row
+        parsed = _parse_history_row(row)
+        if not parsed:
+            continue
+
+        estimated_hours = parsed["estimated_hours"]
 
         if estimated_hours is None:
             continue
 
         estimated_hours = float(estimated_hours)
-        actual_hours = float(actual_hours) if actual_hours is not None else 0.0
-        remaining_hours = float(remaining_hours) if remaining_hours is not None else 0.0
+        actual_hours = float(parsed["actual_hours"]) if parsed["actual_hours"] is not None else 0.0
+        remaining_hours = float(parsed["remaining_hours"]) if parsed["remaining_hours"] is not None else 0.0
 
         if estimated_hours <= 0:
             continue
@@ -410,16 +438,16 @@ def summarize_learning_patterns(history_rows: list) -> str:
         raw_ratio = total_needed / estimated_hours
         clamped_ratio = _clamp_ratio(raw_ratio)
 
-        grouped[(task_type, subject)].append({
-            "importance_level": importance_level,
+        grouped[(parsed["task_type"], parsed["subject"])].append({
+            "importance_level": parsed["importance_level"],
             "estimated_hours": estimated_hours,
             "total_needed": total_needed,
             "raw_ratio": raw_ratio,
             "clamped_ratio": clamped_ratio,
-            "difficulty": float(perceived_difficulty) if perceived_difficulty is not None else None,
-            "effort": float(mental_effort) if mental_effort is not None else None,
-            "confidence": float(confidence_level) if confidence_level is not None else None,
-            "focus": float(focus_level) if focus_level is not None else None,
+            "difficulty": float(parsed["perceived_difficulty"]) if parsed["perceived_difficulty"] is not None else None,
+            "effort": float(parsed["mental_effort"]) if parsed["mental_effort"] is not None else None,
+            "confidence": float(parsed["confidence_level"]) if parsed["confidence_level"] is not None else None,
+            "focus": float(parsed["focus_level"]) if parsed["focus_level"] is not None else None,
         })
 
     if not grouped:
@@ -433,16 +461,6 @@ def summarize_learning_patterns(history_rows: list) -> str:
         avg_estimated = sum(x["estimated_hours"] for x in items) / len(items)
         avg_total_needed = sum(x["total_needed"] for x in items) / len(items)
 
-        difficulty_vals = [x["difficulty"] for x in items if x["difficulty"] is not None]
-        effort_vals = [x["effort"] for x in items if x["effort"] is not None]
-        confidence_vals = [x["confidence"] for x in items if x["confidence"] is not None]
-        focus_vals = [x["focus"] for x in items if x["focus"] is not None]
-
-        avg_difficulty = round(sum(difficulty_vals) / len(difficulty_vals), 2) if difficulty_vals else None
-        avg_effort = round(sum(effort_vals) / len(effort_vals), 2) if effort_vals else None
-        avg_confidence = round(sum(confidence_vals) / len(confidence_vals), 2) if confidence_vals else None
-        avg_focus = round(sum(focus_vals) / len(focus_vals), 2) if focus_vals else None
-
         if avg_clamped_ratio > 1.15:
             pattern = "usually underestimated"
         elif avg_clamped_ratio < 0.85:
@@ -450,7 +468,7 @@ def summarize_learning_patterns(history_rows: list) -> str:
         else:
             pattern = "usually estimated fairly accurately"
 
-        line = (
+        lines.append(
             f"Task type: {task_type} | "
             f"subject: {subject} | "
             f"samples: {len(items)} | "
@@ -460,17 +478,6 @@ def summarize_learning_patterns(history_rows: list) -> str:
             f"avg clamped ratio: {round(avg_clamped_ratio, 2)} | "
             f"time estimation pattern: {pattern}"
         )
-
-        if avg_difficulty is not None:
-            line += f" | avg difficulty: {avg_difficulty}"
-        if avg_effort is not None:
-            line += f" | avg mental effort: {avg_effort}"
-        if avg_confidence is not None:
-            line += f" | avg confidence: {avg_confidence}"
-        if avg_focus is not None:
-            line += f" | avg focus: {avg_focus}"
-
-        lines.append(line)
 
     return "\n".join(lines)
 
