@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from datetime import date, datetime, timedelta
@@ -67,7 +66,6 @@ st.set_page_config(page_title="Personalized Study Planner", layout="wide")
 
 # Database bestaat al, dus niet steeds opnieuw initialiseren
 # init_db()
-
 
 # -----------------------------
 # Session state
@@ -203,11 +201,9 @@ def logout_student():
     st.session_state.llm_chat_history = []
     st.session_state.system_help_chat = []
 
-
 def logout_admin():
     st.session_state.admin_logged_in = False
     st.session_state.admin_username = None
-
 
 def importance_to_color(importance_level: str) -> str:
     if importance_level == "High":
@@ -216,14 +212,12 @@ def importance_to_color(importance_level: str) -> str:
         return "#F59E0B"
     return "#10B981"
 
-
 def importance_badge(importance_level: str) -> str:
     if importance_level == "High":
         return '<span class="badge badge-high">High</span>'
     elif importance_level == "Medium":
         return '<span class="badge badge-medium">Medium</span>'
     return '<span class="badge badge-low">Low</span>'
-
 
 def intensity_badge(intensity: str) -> str:
     if intensity == "High":
@@ -232,14 +226,12 @@ def intensity_badge(intensity: str) -> str:
         return '<span class="badge badge-medium">Medium intensity</span>'
     return '<span class="badge badge-low">Low intensity</span>'
 
-
 def energy_badge(energy: str) -> str:
     if energy == "High":
         return '<span class="badge badge-completed">High energy</span>'
     elif energy == "Medium":
         return '<span class="badge badge-medium">Medium energy</span>'
     return '<span class="badge badge-incomplete">Low energy</span>'
-
 
 def status_badge(status: str) -> str:
     if status == "completed":
@@ -248,12 +240,10 @@ def status_badge(status: str) -> str:
         return '<span class="badge badge-planned">Planned</span>'
     return '<span class="badge badge-incomplete">Incomplete</span>'
 
-
 def student_active_badge(is_active: bool) -> str:
     if is_active:
         return '<span class="badge badge-active">Active</span>'
     return '<span class="badge badge-inactive">Inactive</span>'
-
 
 def render_task_card(task_id, name, subject, task_type, importance, intensity, deadline, est, adj, status):
     st.markdown(
@@ -275,7 +265,6 @@ def render_task_card(task_id, name, subject, task_type, importance, intensity, d
         """,
         unsafe_allow_html=True
     )
-
 
 def render_history_card(task_name, task_type, subject, importance, estimated, adjusted, actual, completed, remaining):
     completed_text = "Yes" if completed else "No"
@@ -306,7 +295,6 @@ def render_history_card(task_name, task_type, subject, importance, estimated, ad
         unsafe_allow_html=True
     )
 
-
 def format_block_duration(hours: float) -> str:
     minutes = round(hours * 60)
 
@@ -320,7 +308,6 @@ def format_block_duration(hours: float) -> str:
         return f"{whole_hours}h"
 
     return f"{whole_hours}h {remaining_minutes}min"
-
 
 def convert_plan_to_calendar_events(daily_plan: dict):
     events = []
@@ -379,7 +366,6 @@ def convert_plan_to_calendar_events(daily_plan: dict):
 
     return events
 
-
 def remove_task_from_generated_plan(task_id: int):
     plan = st.session_state.get("generated_plan")
 
@@ -415,7 +401,6 @@ def remove_task_from_generated_plan(task_id: int):
     plan["total_required_hours"] = round(planned_hours + unscheduled_hours, 2)
     st.session_state.generated_plan = plan
 
-
 def compute_plan_summary(daily_plan: dict, unscheduled_tasks: list):
     unscheduled_total = round(sum(item["remaining_hours"] for item in unscheduled_tasks), 2)
 
@@ -439,7 +424,6 @@ def compute_plan_summary(daily_plan: dict, unscheduled_tasks: list):
         "total_planned_hours": round(total_planned_hours, 2),
         "total_blocks": total_blocks
     }
-
 
 def compute_saved_plan_feasibility(tasks, saved_daily_plan: dict):
     planned_hours_by_task = {}
@@ -485,7 +469,6 @@ def compute_saved_plan_feasibility(tasks, saved_daily_plan: dict):
         "partially_planned_tasks": partially_planned_tasks
     }
 
-
 def get_today_and_week_stats(daily_plan: dict):
     today_str = date.today().isoformat()
     today_hours = 0.0
@@ -516,13 +499,11 @@ def get_today_and_week_stats(daily_plan: dict):
         "week_tasks": week_tasks
     }
 
-
 def get_next_deadline_from_tasks(tasks):
     future_tasks = [t for t in tasks if t[9] != "completed"]
     if not future_tasks:
         return None
     return min(t[6] for t in future_tasks)
-
 
 def render_calendar_legend():
     st.markdown("### Calendar legend")
@@ -536,7 +517,6 @@ def render_calendar_legend():
         """,
         unsafe_allow_html=True
     )
-
 
 def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calendar"):
     if not daily_plan:
@@ -694,7 +674,6 @@ def render_plan_calendar(daily_plan: dict, calendar_key: str = "study_plan_calen
                     unsafe_allow_html=True
                 )
 
-
 def render_workload_chart(daily_plan: dict):
     if not daily_plan:
         st.info("No planned workload yet.")
@@ -709,7 +688,6 @@ def render_workload_chart(daily_plan: dict):
 
     df = pd.DataFrame(rows).sort_values("date")
     st.bar_chart(df.set_index("date"))
-
 
 def render_plan_details(daily_plan: dict):
     if not daily_plan:
@@ -732,7 +710,6 @@ def render_plan_details(daily_plan: dict):
                 """,
                 unsafe_allow_html=True
             )
-
 
 def render_unscheduled_tasks(unscheduled_tasks: list):
     if not unscheduled_tasks:
@@ -769,7 +746,6 @@ def render_unscheduled_tasks(unscheduled_tasks: list):
             """,
             unsafe_allow_html=True
         )
-
 
 def render_student_overview_cards(tasks, daily_plan):
     total_tasks = len(tasks)
@@ -813,7 +789,6 @@ def render_student_overview_cards(tasks, daily_plan):
         st.markdown("#### Task completion progress")
         st.progress(progress)
         st.caption(f"{completed_tasks} of {total_tasks} tasks completed")
-
 
 def group_history_by_task(history):
     grouped = {}
@@ -870,7 +845,6 @@ def group_history_by_task(history):
     result = list(grouped.values())
     result.sort(key=lambda x: x["latest_logged_at"], reverse=True)
     return result
-
 
 def get_feedback_reminder_tasks(student_id: str):
     saved_plan = get_saved_study_plan(student_id)
@@ -963,7 +937,6 @@ def get_feedback_reminder_tasks(student_id: str):
 
     return reminders
 
-
 def render_ai_help_section():
     st.markdown("---")
     st.subheader("AI Help Assistant")
@@ -1027,7 +1000,6 @@ def render_ai_help_section():
 
         st.rerun()
 
-
 # -----------------------------
 # Student pages
 # -----------------------------
@@ -1073,7 +1045,6 @@ Enjoy planning!
     if st.button("Start using the planner"):
         mark_onboarding_seen(student_id)
         st.rerun()
-
 
 def render_student_dashboard_home(student_id: str, student_name: str):
     st.title("Personalized Workload-Aware Study Planner")
@@ -1222,7 +1193,6 @@ def render_student_dashboard_home(student_id: str, student_name: str):
 
     render_ai_help_section()
 
-
 def render_planning_setup_page(student_id: str):
     st.title("Planning Setup")
 
@@ -1293,7 +1263,6 @@ def render_planning_setup_page(student_id: str):
         st.markdown("---")
         st.subheader("Add Task")
 
-        # Rij 1
         col1, col2 = st.columns(2)
 
         with col1:
@@ -1302,7 +1271,6 @@ def render_planning_setup_page(student_id: str):
         with col2:
             deadline = st.date_input("Deadline", value=date.today() + timedelta(days=7))
 
-        # Rij 2
         col1, col2 = st.columns(2)
 
         with col1:
@@ -1329,7 +1297,6 @@ def render_planning_setup_page(student_id: str):
                 ]
             )
 
-        # Rij 3
         col1, col2 = st.columns(2)
 
         with col1:
@@ -1553,8 +1520,6 @@ def render_planning_setup_page(student_id: str):
                     st.rerun()
         else:
             st.info("No open tasks found.")
-
-
 
     elif section == "Daily Context Setup":
 
@@ -2223,7 +2188,6 @@ def render_planning_setup_page(student_id: str):
             else:
                 st.info("Click 'Build Study Plan' to generate a new plan.")
 
-
 def render_plan_summary_cards(plan_result: dict):
     daily_plan = plan_result.get("daily_plan", {})
     unscheduled_tasks = plan_result.get("unscheduled_tasks", [])
@@ -2285,7 +2249,6 @@ def render_plan_summary_cards(plan_result: dict):
     col6.metric("This week", f"{round(planned_hours, 2)} h", f"↑ {planned_blocks} blocks")
     col7.metric("Planned blocks", planned_blocks)
     col8.metric("Planned hours", round(planned_hours, 2))
-
 
 def render_saved_plan_page(student_id: str):
     st.title("Saved Study Plan")
@@ -2403,8 +2366,6 @@ def render_saved_plan_page(student_id: str):
     planning_start = min(grouped.keys())
     planning_end = max(grouped.keys())
 
-    # Prefer the original generated plan metadata if available.
-    # This prevents Saved Plan from recalculating availability differently.
     if st.session_state.generated_plan:
         total_available_hours = float(
             st.session_state.generated_plan.get("total_available_hours", 0.0)
@@ -2423,8 +2384,7 @@ def render_saved_plan_page(student_id: str):
             "day_limit_hours": st.session_state.generated_plan.get("day_limit_hours", None)
         }
     else:
-        # Fallback when the app was refreshed and generated_plan is no longer in session state.
-        # We avoid showing a misleading 0-hour feasibility warning.
+
         total_available_hours = None
 
         saved_plan_result = {
@@ -2613,7 +2573,6 @@ def render_saved_plan_page(student_id: str):
         })
 
         st.rerun()
-
 
 def render_feedback_page(student_id: str):
     st.title("Task Feedback")
@@ -3345,7 +3304,6 @@ def render_feedback_page(student_id: str):
                 key=f"focus_{feedback_task_id}"
             )
 
-
     pending_rebuild_id = st.session_state.get("pending_rebuild_task_id")
     show_rebuild_option = st.session_state.get("show_rebuild_option", False)
 
@@ -3513,8 +3471,6 @@ def render_feedback_page(student_id: str):
                     st.session_state.pending_rebuild_task_id = None
                     st.rerun()
 
-
-
 def render_history_page(student_id: str):
     st.title("Task History")
 
@@ -3662,7 +3618,6 @@ def render_history_page(student_id: str):
                 )
         else:
             st.info("No feedback logs match the selected filters.")
-
 
 def render_help_page():
     st.title("How to use this app")
@@ -3858,7 +3813,6 @@ def render_help_page():
         with st.chat_message("assistant"):
             st.markdown(help_response)
 
-
 # -----------------------------
 # Admin pages
 # -----------------------------
@@ -3933,7 +3887,6 @@ def render_admin_dashboard():
         st.bar_chart(ratio_chart_df)
     else:
         st.info("No student feedback data available yet.")
-
 
 # ------------------------
 # Downloading CSV
@@ -4041,7 +3994,6 @@ def render_admin_detailed_page():
     else:
         st.info("No task data available for this student.")
 
-
 def render_admin_account_management():
     st.title("Student Account Management")
 
@@ -4115,7 +4067,6 @@ def render_admin_account_management():
                     st.success("Student account permanently deleted.")
                     st.rerun()
 
-
 def render_admin_task_type_analysis():
     st.title("Task Type Analysis")
 
@@ -4152,7 +4103,6 @@ def render_admin_task_type_analysis():
 
         st.markdown("### Average workload per task type")
         st.bar_chart(chart_df)
-
 
 def render_admin_subject_analysis():
     st.title("Subject Analysis")
@@ -4204,7 +4154,6 @@ def render_admin_subject_analysis():
 
         st.markdown("### Average cognitive profile per subject")
         st.bar_chart(cognitive_df)
-
 
 def render_admin_learning_profiles():
     st.title("Learning Profiles")
@@ -4280,7 +4229,6 @@ def render_admin_learning_profiles():
 
         st.markdown("### Average profile signals by task type")
         st.bar_chart(grouped_df)
-
 
 # -----------------------------
 # Sidebar + routing
@@ -4419,4 +4367,3 @@ elif mode == "Admin":
 
         with admin_tab_accounts:
             render_admin_account_management()
-

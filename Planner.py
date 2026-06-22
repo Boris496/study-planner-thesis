@@ -2,7 +2,6 @@ from datetime import date, datetime, timedelta
 from typing import Dict, List
 import math
 from zoneinfo import ZoneInfo
-
 import Database
 
 DEFAULT_WAKE_TIME = "07:00"
