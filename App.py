@@ -2891,6 +2891,13 @@ def render_feedback_page(student_id: str):
                 )
 
                 if st.button("Continue", key=f"continue_no_ai_preference_{active_reflection_task_id}"):
+                    finish_context_text = build_current_reflection_context(
+                        subject=loaded_subject,
+                        task_type=loaded_task_type
+                    )
+
+                    save_current_reflection_summary(finish_context_text)
+
                     st.session_state.pending_ai_preference_proposal = None
                     st.session_state.feedback_reflection_task_id = None
                     st.rerun()
@@ -3289,7 +3296,7 @@ def render_feedback_page(student_id: str):
             )
 
             confidence_level = st.slider(
-                "How confident did you feel about this task overall? (1 = very low, 5 = very high)",
+                "Before starting this task, how confident were you that you could successfully complete it? (1 = very low, 5 = very high)",
                 min_value=1,
                 max_value=5,
                 value=3,

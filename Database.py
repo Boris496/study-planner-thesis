@@ -1657,72 +1657,6 @@ def save_study_plan(student_id: str, daily_plan: dict):
     cursor.close()
     conn.close()
 
-def save_planner_personalization_log(student_id: str, task_rows: list, planner_advice: dict):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    advice_map = {
-        item["task_id"]: item
-        for item in planner_advice.get("task_recommendations", [])
-    }
-
-    cursor.execute("DELETE FROM planner_personalization_log WHERE student_id = %s", (student_id,))
-
-    created_at = datetime.now()
-
-    for task in task_rows:
-        (
-            task_id,
-            task_name,
-            subject,
-            task_type,
-            importance_level,
-            task_intensity,
-            deadline,
-            estimated_hours,
-            adjusted_hours,
-            status,
-            is_spread_learning,
-            preferred_study_days,
-            min_session_hours,
-            max_session_hours,
-        ) = task
-
-        advice = advice_map.get(task_id, {})
-
-        cursor.execute("""
-            INSERT INTO planner_personalization_log (
-                student_id,
-                task_id,
-                task_name,
-                subject,
-                task_type,
-                add_time_buffer_percent,
-                preferred_energy,
-                max_session_hours,
-                avoid_after_high_difficulty_task,
-                reason,
-                created_at
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            student_id,
-            task_id,
-            task_name,
-            subject,
-            task_type,
-            int(advice.get("add_time_buffer_percent", 0)),
-            advice.get("preferred_energy"),
-            advice.get("max_session_hours"),
-            bool(advice.get("avoid_after_high_difficulty_task", False)),
-            advice.get("reason", ""),
-            created_at,
-        ))
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
 def save_ai_learning_preference(
     student_id: str,
     task_type: str,
@@ -2462,7 +2396,6 @@ def get_adaptive_planner_evaluation():
         })
 
     return results
-
 
 def get_adaptive_planner_summary():
     rows = get_adaptive_planner_evaluation()
